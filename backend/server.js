@@ -1,7 +1,6 @@
 import express from "express";
 import mysql from "mysql2";
 import cors from "cors";
-import { createServer as createViteServer } from "vite";
 import path from "path";
 import fs from "fs";
 import dotenv from "dotenv";
@@ -573,14 +572,12 @@ app.use((err, req, res, next) => {
    ✅ VITE / STATIC SETUP
 ========================= */
 async function setupVite() {
-  if (process.env.NODE_ENV !== "production") {
-  const vite = await createViteServer({
+  if (process.env.NODE_ENV !== "production") {{
   root: path.resolve(process.cwd(), ".."),
   server: { middlewareMode: true },
   appType: "spa",
-});
+};
 
-    app.use(vite.middlewares);
 
     app.get("*", async (req, res, next) => {
       const url = req.originalUrl;
