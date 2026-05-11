@@ -102,14 +102,13 @@ function initializeDatabase() {
     }
     console.log("✅ TABLE READY");
 
-    // Add columns for older databases that may be missing them
     const alterQueries = [
       "ALTER TABLE file_uploads ADD COLUMN IF NOT EXISTS file_path VARCHAR(500) NULL",
       "ALTER TABLE file_uploads ADD COLUMN IF NOT EXISTS updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP",
     ];
 
     alterQueries.forEach((q) => {
-      db.query(q, () => {}); // Silently ignore errors (column already exists)
+      db.query(q, () => {});
     });
   });
 }
@@ -238,7 +237,6 @@ app.get("/api/files/:id/data", async (req, res) => {
 
     const record = results[0];
 
-    // If a physical file exists, parse and return it
     if (record.file_path) {
       const filename = record.file_path.split("/").pop();
       const physicalPath = path.join(UPLOADS_DIR, filename);
@@ -250,12 +248,10 @@ app.get("/api/files/:id/data", async (req, res) => {
           return res.json({ metadata: record, data: jsonData, rowCount: jsonData.length });
         } catch (parseErr) {
           console.error("❌ FILE PARSE ERROR:", parseErr.message);
-          // Fall through to manual entry fallback
         }
       }
     }
 
-    // Fallback for manual / no-file entries
     return res.json({
       metadata: record,
       data: [{
@@ -321,11 +317,9 @@ app.post("/api/upload-excel", upload.single("file"), async (req, res) => {
       return res.status(400).json({ error: "No file uploaded" });
     }
 
-    // Parse the file
     const { jsonData } = parseFileBuffer(file.buffer, file.originalname);
     const dataCount = jsonData.length;
 
-    // Save physical file
     const uniqueFileName = `${Date.now()}_${file.originalname.replace(/[^a-zA-Z0-9._-]/g, "_")}`;
     const physicalPath = path.join(UPLOADS_DIR, uniqueFileName);
     fs.writeFileSync(physicalPath, file.buffer);
@@ -398,7 +392,6 @@ app.delete("/api/files/:id", async (req, res) => {
   try {
     const { id } = req.params;
 
-    // Look up the record first to get file_path
     const results = await dbQuery("SELECT * FROM file_uploads WHERE id = ?", [id]);
 
     if (results.length === 0) {
@@ -407,7 +400,6 @@ app.delete("/api/files/:id", async (req, res) => {
 
     const record = results[0];
 
-    // Delete physical file if it exists
     if (record.file_path) {
       const filename = record.file_path.split("/").pop();
       const physicalPath = path.join(UPLOADS_DIR, filename);
@@ -419,11 +411,9 @@ app.delete("/api/files/:id", async (req, res) => {
         }
       } catch (fileErr) {
         console.error("⚠️ PHYSICAL FILE DELETE WARN:", fileErr.message);
-        // Continue — still delete the DB record
       }
     }
 
-    // Delete DB record
     await dbQuery("DELETE FROM file_uploads WHERE id = ?", [id]);
     console.log("✅ DB RECORD DELETED:", id);
 
@@ -445,11 +435,9 @@ app.delete("/api/files", async (req, res) => {
       return res.status(400).json({ error: "Provide an array of IDs to delete" });
     }
 
-    // Get file paths before deleting
     const placeholders = ids.map(() => "?").join(",");
     const records = await dbQuery(`SELECT id, file_path FROM file_uploads WHERE id IN (${placeholders})`, ids);
 
-    // Delete physical files
     records.forEach((record) => {
       if (record.file_path) {
         const filename = record.file_path.split("/").pop();
@@ -460,7 +448,6 @@ app.delete("/api/files", async (req, res) => {
       }
     });
 
-    // Delete DB records
     const result = await dbQuery(`DELETE FROM file_uploads WHERE id IN (${placeholders})`, ids);
     console.log("✅ BULK DELETE:", result.affectedRows, "records");
 
@@ -476,19 +463,16 @@ app.delete("/api/files", async (req, res) => {
 ========================= */
 app.get("/api/stats", async (req, res) => {
   try {
-    const [totals]       = await dbQuery("SELECT COUNT(*) AS total, SUM(data_count) AS totalRecords FROM file_uploads");
-    const [correct]      = await dbQuery("SELECT COUNT(*) AS count, SUM(data_count) AS records FROM file_uploads WHERE status = 'Correct'");
-    const [wrong]        = await dbQuery("SELECT COUNT(*) AS count, SUM(data_count) AS records FROM file_uploads WHERE status = 'Wrong'");
-    const vendorStats    = await dbQuery("SELECT vendor, COUNT(*) AS files, SUM(data_count) AS records, SUM(status='Correct') AS correct, SUM(status='Wrong') AS wrong FROM file_uploads GROUP BY vendor ORDER BY files DESC");
-    const dailyTrend     = await dbQuery("SELECT DATE(created_at) AS day, COUNT(*) AS uploads FROM file_uploads WHERE created_at >= DATE_SUB(NOW(), INTERVAL 30 DAY) GROUP BY DATE(created_at) ORDER BY day ASC");
+    const [totals]    = await dbQuery("SELECT COUNT(*) AS total, SUM(data_count) AS totalRecords FROM file_uploads");
+    const [correct]   = await dbQuery("SELECT COUNT(*) AS count, SUM(data_count) AS records FROM file_uploads WHERE status = 'Correct'");
+    const [wrong]     = await dbQuery("SELECT COUNT(*) AS count, SUM(data_count) AS records FROM file_uploads WHERE status = 'Wrong'");
+    const vendorStats = await dbQuery("SELECT vendor, COUNT(*) AS files, SUM(data_count) AS records, SUM(status='Correct') AS correct, SUM(status='Wrong') AS wrong FROM file_uploads GROUP BY vendor ORDER BY files DESC");
+    const dailyTrend  = await dbQuery("SELECT DATE(created_at) AS day, COUNT(*) AS uploads FROM file_uploads WHERE created_at >= DATE_SUB(NOW(), INTERVAL 30 DAY) GROUP BY DATE(created_at) ORDER BY day ASC");
 
     res.json({
-      totals: {
-        files:   totals.total || 0,
-        records: totals.totalRecords || 0,
-      },
-      correct: { files: correct.count || 0, records: correct.records || 0 },
-      wrong:   { files: wrong.count || 0,   records: wrong.records   || 0 },
+      totals:   { files: totals.total || 0, records: totals.totalRecords || 0 },
+      correct:  { files: correct.count || 0, records: correct.records || 0 },
+      wrong:    { files: wrong.count || 0,   records: wrong.records   || 0 },
       accuracy: totals.total > 0 ? Math.round((correct.count / totals.total) * 100) : 0,
       vendorStats,
       dailyTrend,
@@ -515,7 +499,7 @@ app.get("/api/vendors", async (req, res) => {
 });
 
 /* =========================
-   ✅ EXPORT VENDOR DATA AS JSON
+   ✅ EXPORT VENDOR DATA
 ========================= */
 app.get("/api/export/:vendor", async (req, res) => {
   try {
@@ -572,45 +556,40 @@ app.use((err, req, res, next) => {
    ✅ VITE / STATIC SETUP
 ========================= */
 async function setupVite() {
-  if (process.env.NODE_ENV !== "production") {{
-  root: path.resolve(process.cwd(), ".."),
-  server: { middlewareMode: true },
-  appType: "spa",
-};
+  if (process.env.NODE_ENV !== "production") {
+    const { createServer: createViteServer } = await import("vite");
 
+    const vite = await createViteServer({
+      root: path.resolve(process.cwd(), ".."),
+      server: { middlewareMode: true },
+      appType: "spa",
+    });
 
-    app.get("*", async (req, res, next) => {
+    app.use(vite.middlewares);
+
+    app.get(/(.*)/, async (req, res, next) => {
       const url = req.originalUrl;
 
-      // Skip API routes — let them return proper 404 from the API handler below
       if (url.startsWith("/api/")) return next();
 
       try {
-        let template = fs.readFileSync(path.resolve(process.cwd(), "..", "index.html"), "utf-8");
+        let template = fs.readFileSync(
+          path.resolve(process.cwd(), "..", "index.html"),
+          "utf-8"
+        );
         template = await vite.transformIndexHtml(url, template);
         res.status(200).set({ "Content-Type": "text/html" }).end(template);
       } catch (e) {
-        vite?.ssrFixStacktrace(e);
+        vite.ssrFixStacktrace(e);
         next(e);
       }
     });
 
-    // API 404 fallback
-    app.use("/api/*", (req, res) => {
-      res.status(404).json({ error: `API route not found: ${req.originalUrl}` });
-    });
-
   } else {
-    // Production: serve built frontend
     const distPath = path.join(process.cwd(), "..", "dist");
-
-    if (!fs.existsSync(distPath)) {
-      console.warn("⚠️  /dist not found. Run `npm run build` first.");
-    }
-
     app.use(express.static(distPath));
 
-    app.get("*", (req, res) => {
+    app.get(/(.*)/, (req, res) => {
       if (req.path.startsWith("/api/")) {
         return res.status(404).json({ error: "API route not found" });
       }
@@ -619,7 +598,7 @@ async function setupVite() {
   }
 
   /* =========================
-     ✅ START SERVER
+     ✅ START SERVER (once)
   ========================= */
   app.listen(PORT, "0.0.0.0", () => {
     console.log(`\n🚀 Server running → http://localhost:${PORT}`);
