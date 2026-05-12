@@ -1,0 +1,33 @@
+name: media-vendor-insights
+metadata:
+  description: Media Vendor Insights Dashboard with React frontend and Express backend
+services:
+  - name: web
+    source:
+      dir: .
+    language: nodejs
+    project: ./
+    host: azureapp
+    resourceGroup: media-vendor-insights-rg
+    sku: B1
+    environment:
+      NODE_ENV: production
+      PORT: 8080
+      DB_HOST: ${DB_HOST}
+      DB_USER: ${DB_USER}
+      DB_PASSWORD: ${DB_PASSWORD}
+      DB_NAME: ${DB_NAME}
+      GEMINI_API_KEY: ${GEMINI_API_KEY}
+      APP_URL: ${APP_URL}
+    build:
+      commands:
+        - npm ci
+        - npm run build
+      output: dist
+    start:
+      command: npm run server
+    hooks:
+      prebuild:
+        - echo "Starting build process..."
+      postdeploy:
+        - echo "Deployment complete!"
