@@ -54,10 +54,8 @@ interface VendorRow {
   name: string;
   totalFiles: number;
   correctFiles: number;
-  wrongFiles: number;
   totalDataCount: number;
   correctDataCount: number;
-  wrongDataCount: number;
   fileRatio: number;
 }
 
@@ -66,7 +64,7 @@ interface FileDetail {
   dbId: number;
   name: string;
   date: string;
-  status: 'Correct' | 'Wrong';
+  status: 'Correct';
   dataCount: number;
   filePath?: string;
 }
@@ -270,7 +268,9 @@ const PreviewModal = ({ fileId, fileName, onClose }: { fileId: number; fileName:
   useEffect(() => {
     const fetchPreview = async () => {
       try {
-        const res = await fetch(`/api/files/${fileId}/data`);
+        const res = await fetch(`/api/files/${fileId}/data`, {
+          headers: { 'bypass-tunnel-reminder': 'true' }
+        });
         if (!res.ok) throw new Error('Failed to load preview');
         const data = await res.json();
         setPreviewData(data);
@@ -430,7 +430,7 @@ const NewUploadModal = ({
   const [vendor, setVendor] = useState(vendors[0] || '');
   const [fileName, setFileName] = useState('');
   const [dataCount, setDataCount] = useState(0);
-  const [status, setStatus] = useState<'Correct' | 'Wrong'>('Correct');
+  const status = 'Correct';
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
@@ -531,27 +531,14 @@ const NewUploadModal = ({
                   className="w-full px-6 py-4 rounded-2xl border border-slate-200 focus:ring-4 focus:ring-blue-50 outline-none text-sm font-bold text-[#0D1E4C] placeholder:text-slate-300 transition-all uppercase"
                 />
               </div>
-              <div className="grid grid-cols-2 gap-6">
-                <div className="space-y-3">
-                  <label className="text-[10px] font-bold text-slate-400 uppercase tracking-[0.25em] block ml-1">Record Count</label>
-                  <input
-                    type="number"
-                    value={dataCount}
-                    onChange={(e) => setDataCount(parseInt(e.target.value) || 0)}
-                    className="w-full px-6 py-4 rounded-2xl border border-slate-200 focus:ring-4 focus:ring-blue-50 outline-none text-sm font-bold text-[#0D1E4C] bg-slate-50 transition-all"
-                  />
-                </div>
-                <div className="space-y-3">
-                  <label className="text-[10px] font-bold text-slate-400 uppercase tracking-[0.25em] block ml-1">Status Code</label>
-                  <select
-                    value={status}
-                    onChange={(e) => setStatus(e.target.value as 'Correct' | 'Wrong')}
-                    className="w-full px-6 py-4 rounded-2xl border border-slate-200 focus:ring-4 focus:ring-blue-50 outline-none text-sm font-bold text-[#0D1E4C] bg-slate-50 transition-all appearance-none uppercase"
-                  >
-                    <option value="Correct">PASSED (VERIFIED)</option>
-                    <option value="Wrong">FAILED (ERROR)</option>
-                  </select>
-                </div>
+              <div className="space-y-3">
+                <label className="text-[10px] font-bold text-slate-400 uppercase tracking-[0.25em] block ml-1">Record Count</label>
+                <input
+                  type="number"
+                  value={dataCount}
+                  onChange={(e) => setDataCount(parseInt(e.target.value) || 0)}
+                  className="w-full px-6 py-4 rounded-2xl border border-slate-200 focus:ring-4 focus:ring-blue-50 outline-none text-sm font-bold text-[#0D1E4C] bg-slate-50 transition-all"
+                />
               </div>
             </>
           ) : (
@@ -730,7 +717,9 @@ export default function App() {
   const fetchData = useCallback(async () => {
     setIsLoading(true);
     try {
-      const response = await fetch('/api/files');
+      const response = await fetch('/api/files', {
+        headers: { 'bypass-tunnel-reminder': 'true' }
+      });
       if (!response.ok) throw new Error('Failed to reach backend server');
       const data = await response.json();
 
@@ -742,7 +731,7 @@ export default function App() {
         const vendor = item.vendor;
         if (!details[vendor]) {
           details[vendor] = [];
-          stats[vendor] = { totalFiles: 0, correctFiles: 0, wrongFiles: 0, totalDataCount: 0, correctDataCount: 0, wrongDataCount: 0 };
+          stats[vendor] = { totalFiles: 0, correctFiles: 0, totalDataCount: 0, correctDataCount: 0 };
         }
 
         const date = new Date(item.created_at);
@@ -754,19 +743,14 @@ export default function App() {
           dbId: item.id,
           name: item.file_name,
           date: date.toISOString().split('T')[0],
-          status: item.status as 'Correct' | 'Wrong',
+          status: 'Correct',
           dataCount: item.data_count,
           filePath: item.file_path || undefined,
         });
 
         stats[vendor].totalFiles += 1;
-        if (item.status === 'Correct') {
-          stats[vendor].correctFiles += 1;
-          stats[vendor].correctDataCount += item.data_count;
-        } else {
-          stats[vendor].wrongFiles += 1;
-          stats[vendor].wrongDataCount += item.data_count;
-        }
+        stats[vendor].correctFiles += 1;
+        stats[vendor].correctDataCount += item.data_count;
         stats[vendor].totalDataCount += item.data_count;
       });
 
@@ -791,12 +775,15 @@ export default function App() {
   useEffect(() => { fetchData(); }, [fetchData]);
 
   // ---- Manual Upload ----
-  const handleManualUpload = async (newData: { vendor: string; fileName: string; dataCount: number; status: 'Correct' | 'Wrong' }) => {
+  const handleManualUpload = async (newData: { vendor: string; fileName: string; dataCount: number; status?: 'Correct' }) => {
     setIsUploading(true);
     try {
       const response = await fetch('/api/upload', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: { 
+          'Content-Type': 'application/json',
+          'bypass-tunnel-reminder': 'true'
+        },
         body: JSON.stringify(newData),
       });
       const responseData = await response.json().catch(() => ({}));
@@ -821,6 +808,7 @@ export default function App() {
 
       const response = await fetch('/api/upload-excel', {
         method: 'POST',
+        headers: { 'bypass-tunnel-reminder': 'true' },
         body: formData,
       });
       const responseData = await response.json().catch(() => ({}));
@@ -840,7 +828,10 @@ export default function App() {
     if (!deleteTarget) return;
     setIsDeleting(true);
     try {
-      const response = await fetch(`/api/files/${deleteTarget.id}`, { method: 'DELETE' });
+      const response = await fetch(`/api/files/${deleteTarget.id}`, { 
+        method: 'DELETE',
+        headers: { 'bypass-tunnel-reminder': 'true' }
+      });
       if (!response.ok) throw new Error('Delete failed');
       await fetchData();
       showToast('Record deleted successfully.', 'success');
@@ -893,10 +884,9 @@ export default function App() {
   const totalFilesCount = useMemo(() => vendors.reduce((acc, v) => acc + v.totalFiles, 0), [vendors]);
 
   const fileStatusData = useMemo(() => {
-    const totals = vendors.reduce((acc, v) => ({ correct: acc.correct + v.correctFiles, wrong: acc.wrong + v.wrongFiles }), { correct: 0, wrong: 0 });
+    const totals = vendors.reduce((acc, v) => ({ correct: acc.correct + v.correctFiles }), { correct: 0 });
     return [
       { name: 'Correct Files', value: totals.correct, color: COLORS.success },
-      { name: 'Wrong Files', value: totals.wrong, color: COLORS.danger },
     ];
   }, [vendors]);
 
@@ -925,10 +915,10 @@ export default function App() {
   // ---- Export all vendors CSV ----
   const handleExportAllCSV = () => {
     if (!vendors.length) return;
-    const headers = ['Vendor', 'Total Files', 'Correct Files', 'Wrong Files', 'Total Records', 'Accuracy %'];
+    const headers = ['Vendor', 'Total Files', 'Correct Files', 'Total Records', 'Accuracy %'];
     const csvContent = [
       headers.join(','),
-      ...vendors.map((v) => [v.name, v.totalFiles, v.correctFiles, v.wrongFiles, v.totalDataCount, v.fileRatio].join(',')),
+      ...vendors.map((v) => [v.name, v.totalFiles, v.correctFiles, v.totalDataCount, v.fileRatio].join(',')),
     ].join('\n');
     const blob = new Blob([csvContent], { type: 'text/csv' });
     const url = URL.createObjectURL(blob);
@@ -1000,10 +990,9 @@ export default function App() {
               </div>
 
               {/* Stats Bar */}
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                 <DetailStat label="Total Files" value={currentDetails.length} icon={<DatabaseIcon size={20} />} color="primary" />
-                <DetailStat label="Correct Files" value={currentDetails.filter((f) => f.status === 'Correct').length} icon={<CheckCircle2Icon size={20} />} color="success" />
-                <DetailStat label="Wrong Files" value={currentDetails.filter((f) => f.status === 'Wrong').length} icon={<AlertCircleIcon size={20} />} color="danger" />
+                <DetailStat label="Correct Files" value={currentDetails.length} icon={<CheckCircle2Icon size={20} />} color="success" />
                 <DetailStat label="System State" value="Optimized" icon={<ActivityIcon size={20} />} color="slate" />
               </div>
 
@@ -1033,7 +1022,6 @@ export default function App() {
                         <TableHead label="NAME" onClick={() => handleSort('name')} activeSort={sortConfig?.key === 'name' ? sortConfig.direction : null} />
                         <TableHead label="DATE" onClick={() => handleSort('date')} activeSort={sortConfig?.key === 'date' ? sortConfig.direction : null} />
                         <TableHead label="COUNT" onClick={() => handleSort('dataCount')} activeSort={sortConfig?.key === 'dataCount' ? sortConfig.direction : null} />
-                        <TableHead label="STATUS" />
                         <TableHead label="ACTIONS" />
                       </tr>
                     </thead>
@@ -1120,7 +1108,7 @@ export default function App() {
                 <h1 className="text-4xl font-bold text-slate-900 mb-4">PERFORMANCE HUB</h1>
                 <p className="text-slate-400 text-sm font-bold uppercase tracking-widest">Regional Efficiency Metrics & Load Balancing</p>
               </div>
-              <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+              <div className="grid grid-cols-1 gap-8">
                 <ChartCard title="Vendor Accuracy Comparison" className="min-h-[400px] flex flex-col">
                   <p className="text-[10px] font-bold text-slate-400 mb-8 uppercase tracking-widest">File accuracy % per vendor</p>
                   <div className="flex-1 w-full min-h-[280px]">
@@ -1145,28 +1133,6 @@ export default function App() {
                   </div>
                 </ChartCard>
 
-                <ChartCard title="Error Distribution by Vendor" className="min-h-[400px] flex flex-col">
-                  <p className="text-[10px] font-bold text-slate-400 mb-8 uppercase tracking-widest">Wrong vs correct files per vendor</p>
-                  <div className="flex-1 space-y-6 mt-4">
-                    {vendors.map((v) => (
-                      <div key={v.name} className="space-y-2">
-                        <div className="flex justify-between items-center">
-                          <span className="text-xs font-bold text-[#0D1E4C] uppercase tracking-wide">{v.name}</span>
-                          <span className="text-[10px] font-bold text-slate-400">{v.correctFiles}✓ / {v.wrongFiles}✗</span>
-                        </div>
-                        <div className="h-3 w-full bg-slate-100 rounded-full overflow-hidden flex shadow-inner">
-                          <div className="h-full bg-[#00A19D] rounded-l-full transition-all" style={{ width: `${v.fileRatio}%` }} />
-                          <div className="h-full bg-[#E4002B] rounded-r-full transition-all" style={{ width: `${100 - v.fileRatio}%` }} />
-                        </div>
-                      </div>
-                    ))}
-                    {vendors.length === 0 && (
-                      <div className="flex items-center justify-center h-40 text-slate-300 font-bold italic uppercase tracking-widest border-2 border-dashed border-slate-100 rounded-3xl">
-                        No vendor data available
-                      </div>
-                    )}
-                  </div>
-                </ChartCard>
               </div>
             </motion.div>
 
@@ -1287,7 +1253,6 @@ export default function App() {
                   <div className="space-y-10 pt-2">
                     <ProgressItem label="Total Records" total={vendors.reduce((acc, v) => acc + v.totalDataCount, 0)} color={COLORS.primary} perc={100} />
                     <ProgressItem label="Accurate Data" total={vendors.reduce((acc, v) => acc + v.correctDataCount, 0)} color={COLORS.success} perc={Math.round((vendors.reduce((acc, v) => acc + v.correctDataCount, 0) / (vendors.reduce((acc, v) => acc + v.totalDataCount, 0) || 1)) * 100)} />
-                    <ProgressItem label="Error Rate" total={vendors.reduce((acc, v) => acc + v.wrongDataCount, 0)} color={COLORS.danger} perc={Math.round((vendors.reduce((acc, v) => acc + v.wrongDataCount, 0) / (vendors.reduce((acc, v) => acc + v.totalDataCount, 0) || 1)) * 100)} />
                   </div>
                 </ChartCard>
               </div>
@@ -1313,7 +1278,6 @@ export default function App() {
                         <TableHead label="VENDOR" />
                         <TableHead label="FILES" />
                         <TableHead label="VERIFIED" />
-                        <TableHead label="FLAGGED" />
                         <TableHead label="RECORDS" />
                         <TableHead label="ACCURACY" />
                       </tr>
@@ -1339,12 +1303,6 @@ export default function App() {
                               <div className="flex items-center gap-2">
                                 <CheckCircle2Icon size={14} className="text-[#00A19D]" />
                                 <span className="text-sm font-bold text-[#0D1E4C]">{vendor.correctFiles}</span>
-                              </div>
-                            </td>
-                            <td className="px-6 lg:px-10 py-8">
-                              <div className="flex items-center gap-2">
-                                <AlertCircleIcon size={14} className="text-[#E4002B]" />
-                                <span className="text-sm font-bold text-[#0D1E4C]">{vendor.wrongFiles}</span>
                               </div>
                             </td>
                             <td className="px-6 lg:px-10 py-8 font-mono text-sm font-bold text-[#0D1E4C]">{vendor.totalDataCount.toLocaleString()}</td>

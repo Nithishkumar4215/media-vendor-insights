@@ -283,8 +283,8 @@ app.post("/api/upload", async (req, res) => {
       return res.status(400).json({ error: "Missing required fields: vendor, fileName, dataCount, status" });
     }
 
-    if (!["Correct", "Wrong"].includes(status)) {
-      return res.status(400).json({ error: "Status must be 'Correct' or 'Wrong'" });
+    if (status !== "Correct") {
+      return res.status(400).json({ error: "Status must be 'Correct'" });
     }
 
     const result = await dbQuery(
@@ -356,8 +356,8 @@ app.put("/api/files/:id", async (req, res) => {
     const params = [];
 
     if (status) {
-      if (!["Correct", "Wrong"].includes(status)) {
-        return res.status(400).json({ error: "Status must be 'Correct' or 'Wrong'" });
+      if (status !== "Correct") {
+        return res.status(400).json({ error: "Status must be 'Correct'" });
       }
       fields.push("status = ?");
       params.push(status);

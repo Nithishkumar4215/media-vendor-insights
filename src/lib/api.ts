@@ -1,5 +1,4 @@
-
-const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000';
+const API_BASE_URL = import.meta.env.VITE_API_URL || '';
 
 class ApiClient {
   private baseURL: string;
@@ -73,7 +72,7 @@ class ApiClient {
     vendor: string;
     fileName: string;
     dataCount: number;
-    status: 'Correct' | 'Wrong';
+    status?: 'Correct';
   }) {
     return this.request('/api/upload', {
       method: 'POST',
@@ -102,7 +101,7 @@ class ApiClient {
   }
 
   async updateFile(id: number, data: {
-    status?: 'Correct' | 'Wrong';
+    status?: 'Correct';
     vendor?: string;
     fileName?: string;
     dataCount?: number;
