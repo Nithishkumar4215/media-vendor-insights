@@ -4,7 +4,8 @@
   "version": "0.0.0",
   "type": "module",
   "scripts": {
-    "dev": "vite --port=3000 --host=0.0.0.0",
+    "dev": "tsx backend/server.js",
+    "start": "cross-env NODE_ENV=production tsx backend/server.js",
     "server": "tsx backend/server.js",
     "build": "vite build",
     "preview": "vite preview",
@@ -17,6 +18,7 @@
     "@vitejs/plugin-react": "^5.0.4",
     "clsx": "^2.1.1",
     "cors": "^2.8.6",
+    "cross-env": "^10.1.0",
     "dotenv": "^17.4.2",
     "exceljs": "^4.4.0",
     "express": "^4.22.1",

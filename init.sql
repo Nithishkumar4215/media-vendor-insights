@@ -1,0 +1,2 @@
+-- Auto-generated database initialization
+-- The application backend will automatically create tables on startup.

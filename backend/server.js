@@ -57,6 +57,7 @@ const db = mysql.createConnection({
   password: process.env.DB_PASSWORD || "root",
   database: process.env.DB_NAME     || "vendor_db",
   charset:  "utf8mb4",
+  ...(process.env.DB_SSL === "true" ? { ssl: { rejectUnauthorized: false } } : {})
 });
 
 db.connect((err) => {
@@ -560,7 +561,7 @@ async function setupVite() {
     const { createServer: createViteServer } = await import("vite");
 
     const vite = await createViteServer({
-      root: path.resolve(process.cwd(), ".."),
+      root: process.cwd(),
       server: { middlewareMode: true },
       appType: "spa",
     });
@@ -574,7 +575,7 @@ async function setupVite() {
 
       try {
         let template = fs.readFileSync(
-          path.resolve(process.cwd(), "..", "index.html"),
+          path.resolve(process.cwd(), "index.html"),
           "utf-8"
         );
         template = await vite.transformIndexHtml(url, template);
@@ -586,7 +587,7 @@ async function setupVite() {
     });
 
   } else {
-    const distPath = path.join(process.cwd(), "..", "dist");
+    const distPath = path.join(process.cwd(), "dist");
     app.use(express.static(distPath));
 
     app.get(/(.*)/, (req, res) => {
