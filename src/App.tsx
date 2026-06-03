@@ -31,6 +31,7 @@ import {
   FilterIcon,
   SunIcon,
   MoonIcon,
+  MenuIcon,
 } from 'lucide-react';
 import {
   BarChart,
@@ -121,39 +122,122 @@ const CHART_GRADIENTS = [
 // ============================================================
 // SIDEBAR
 // ============================================================
-const Sidebar = ({ activeTab, onTabChange, isDarkMode }: { activeTab: string; onTabChange: (tab: string) => void; isDarkMode: boolean }) => (
-  <div className={cn(
-    "w-64 border-r flex flex-col min-h-screen sticky top-0 h-screen overflow-y-auto hidden lg:flex select-none transition-all duration-300",
-    isDarkMode 
-      ? "bg-slate-900 border-slate-800 text-white" 
-      : "bg-white border-slate-100 text-[#0c1329]"
-  )}>
-    <div className="p-8 pb-4 flex items-center gap-3">
-      <div className="flex items-center gap-2 cursor-pointer" onClick={() => onTabChange('Overview')}>
-        <div className="w-10 h-10 rounded-xl bg-[#005CB9] flex items-center justify-center shadow-lg shadow-blue-100">
-          <DatabaseIcon className="text-white" size={20} />
+const Sidebar = ({ 
+  activeTab, 
+  onTabChange, 
+  isDarkMode, 
+  isOpen, 
+  onClose 
+}: { 
+  activeTab: string; 
+  onTabChange: (tab: string) => void; 
+  isDarkMode: boolean; 
+  isOpen: boolean; 
+  onClose: () => void; 
+}) => (
+  <>
+    {/* Desktop Sidebar: stays static and visible on lg+ */}
+    <div className={cn(
+      "w-64 border-r flex-col min-h-screen sticky top-0 h-screen overflow-y-auto hidden lg:flex select-none transition-all duration-300 shrink-0",
+      isDarkMode 
+        ? "bg-slate-900 border-slate-800 text-white" 
+        : "bg-white border-slate-100 text-[#0c1329]"
+    )}>
+      <div className="p-8 pb-4 flex items-center gap-3">
+        <div className="flex items-center gap-2 cursor-pointer" onClick={() => onTabChange('Overview')}>
+          <div className="w-10 h-10 rounded-xl bg-[#005CB9] flex items-center justify-center shadow-lg shadow-blue-100">
+            <DatabaseIcon className="text-white" size={20} />
+          </div>
+          <span className={cn("text-2xl font-bold tracking-tight", isDarkMode ? "text-slate-50" : "text-[#0D1E4C]")}>INCYTE</span>
         </div>
-        <span className={cn("text-2xl font-bold tracking-tight", isDarkMode ? "text-slate-50" : "text-[#0D1E4C]")}>INCYTE</span>
+      </div>
+      <div className="mt-12 px-6 space-y-1">
+        <p className="text-[10px] font-bold text-slate-400 uppercase tracking-[0.2em] px-4 mb-4">Analytics</p>
+        <SidebarLink icon={<LayoutDashboardIcon size={18} />} label="Overview" active={activeTab === 'Overview'} onClick={() => onTabChange('Overview')} isDarkMode={isDarkMode} />
+        <SidebarLink icon={<BarChart3Icon size={18} />} label="Performance" active={activeTab === 'Performance'} onClick={() => onTabChange('Performance')} isDarkMode={isDarkMode} />
+      </div>
+      <div className="mt-auto p-6">
+        <div className={cn(
+          "p-4 rounded-2xl border transition-colors duration-300",
+          isDarkMode ? "bg-slate-850 border-slate-755 text-slate-100" : "bg-slate-50 border-slate-100"
+        )}>
+          <p className="text-[10px] font-bold text-slate-400 uppercase mb-2">Storage</p>
+          <div className={cn("h-1.5 w-full rounded-full overflow-hidden mb-2", isDarkMode ? "bg-slate-800" : "bg-slate-200")}>
+            <div className="h-full bg-[#00B5E2] rounded-full w-[65%]" />
+          </div>
+          <p className={cn("text-[10px] font-bold", isDarkMode ? "text-slate-400" : "text-slate-600")}>65% of 10GB used</p>
+        </div>
       </div>
     </div>
-    <div className="mt-12 px-6 space-y-1">
-      <p className="text-[10px] font-bold text-slate-400 uppercase tracking-[0.2em] px-4 mb-4">Analytics</p>
-      <SidebarLink icon={<LayoutDashboardIcon size={18} />} label="Overview" active={activeTab === 'Overview'} onClick={() => onTabChange('Overview')} isDarkMode={isDarkMode} />
-      <SidebarLink icon={<BarChart3Icon size={18} />} label="Performance" active={activeTab === 'Performance'} onClick={() => onTabChange('Performance')} isDarkMode={isDarkMode} />
-    </div>
-    <div className="mt-auto p-6">
-      <div className={cn(
-        "p-4 rounded-2xl border transition-colors duration-300",
-        isDarkMode ? "bg-slate-850 border-slate-755 text-slate-100" : "bg-slate-50 border-slate-100"
-      )}>
-        <p className="text-[10px] font-bold text-slate-400 uppercase mb-2">Storage</p>
-        <div className={cn("h-1.5 w-full rounded-full overflow-hidden mb-2", isDarkMode ? "bg-slate-800" : "bg-slate-200")}>
-          <div className="h-full bg-[#00B5E2] rounded-full w-[65%]" />
-        </div>
-        <p className={cn("text-[10px] font-bold", isDarkMode ? "text-slate-400" : "text-slate-600")}>65% of 10GB used</p>
-      </div>
-    </div>
-  </div>
+
+    {/* Mobile/Tablet Sidebar: Drawer with slide-in animation using motion */}
+    <AnimatePresence>
+      {isOpen && (
+        <>
+          {/* Backdrop */}
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            onClick={onClose}
+            className="fixed inset-0 bg-slate-950/60 backdrop-blur-sm z-50 lg:hidden"
+          />
+
+          {/* Drawer */}
+          <motion.div
+            initial={{ x: '-100%' }}
+            animate={{ x: 0 }}
+            exit={{ x: '-100%' }}
+            transition={{ type: 'spring', damping: 25, stiffness: 200 }}
+            className={cn(
+              "fixed top-0 left-0 bottom-0 w-64 z-50 flex flex-col h-screen overflow-y-auto lg:hidden select-none border-r shadow-2xl",
+              isDarkMode 
+                ? "bg-slate-900 border-slate-800 text-white" 
+                : "bg-white border-slate-100 text-[#0c1329]"
+            )}
+          >
+            {/* Header with Close option for easy accessibility */}
+            <div className="p-8 pb-4 flex items-center justify-between">
+              <div className="flex items-center gap-2 cursor-pointer" onClick={() => { onTabChange('Overview'); onClose(); }}>
+                <div className="w-10 h-10 rounded-xl bg-[#005CB9] flex items-center justify-center shadow-lg shadow-blue-100">
+                  <DatabaseIcon className="text-white" size={20} />
+                </div>
+                <span className={cn("text-2xl font-bold tracking-tight", isDarkMode ? "text-slate-50" : "text-[#0D1E4C]")}>INCYTE</span>
+              </div>
+              <button 
+                onClick={onClose} 
+                className={cn(
+                  "p-1.5 rounded-lg border transition-all hover:scale-105 cursor-pointer", 
+                  isDarkMode ? "border-slate-800 text-slate-400 hover:bg-slate-800 hover:text-white" : "border-slate-100 text-slate-500 hover:bg-slate-50 hover:text-slate-800"
+                )}
+              >
+                <XIcon size={16} />
+              </button>
+            </div>
+
+            <div className="mt-12 px-6 space-y-1">
+              <p className="text-[10px] font-bold text-slate-400 uppercase tracking-[0.2em] px-4 mb-4">Analytics</p>
+              <SidebarLink icon={<LayoutDashboardIcon size={18} />} label="Overview" active={activeTab === 'Overview'} onClick={() => { onTabChange('Overview'); onClose(); }} isDarkMode={isDarkMode} />
+              <SidebarLink icon={<BarChart3Icon size={18} />} label="Performance" active={activeTab === 'Performance'} onClick={() => { onTabChange('Performance'); onClose(); }} isDarkMode={isDarkMode} />
+            </div>
+
+            <div className="mt-auto p-6">
+              <div className={cn(
+                "p-4 rounded-2xl border transition-colors duration-300",
+                isDarkMode ? "bg-slate-850 border-slate-755 text-slate-100" : "bg-slate-50 border-slate-100"
+              )}>
+                <p className="text-[10px] font-bold text-slate-400 uppercase mb-2">Storage</p>
+                <div className={cn("h-1.5 w-full rounded-full overflow-hidden mb-2", isDarkMode ? "bg-slate-800" : "bg-slate-200")}>
+                  <div className="h-full bg-[#00B5E2] rounded-full w-[65%]" />
+                </div>
+                <p className={cn("text-[10px] font-bold", isDarkMode ? "text-slate-400" : "text-slate-600")}>65% of 10GB used</p>
+              </div>
+            </div>
+          </motion.div>
+        </>
+      )}
+    </AnimatePresence>
+  </>
 );
 
 const SidebarLink = ({ icon, label, active, onClick, isDarkMode }: { icon: React.ReactNode; label: string; active?: boolean; onClick: () => void; isDarkMode?: boolean }) => (
@@ -171,71 +255,327 @@ const SidebarLink = ({ icon, label, active, onClick, isDarkMode }: { icon: React
   </button>
 );
 
-// ============================================================
+/// ============================================================
 // HEADER
 // ============================================================
+const USER_PROFILES = {
+  admin: {
+    fullName: "Admin User",
+    role: "System Administrator",
+    initial: "A",
+    avatarBg: "bg-blue-600 text-white border-blue-700",
+    avatarBgDark: "bg-blue-600 text-slate-100 border-blue-800",
+    color: "text-[#005CB9]"
+  },
+  'user 1': {
+    fullName: "User 1",
+    role: "Operator",
+    initial: "1",
+    avatarBg: "bg-teal-600 text-white border-teal-700",
+    avatarBgDark: "bg-teal-600 text-slate-100 border-teal-800",
+    color: "text-teal-600"
+  },
+  'user 2': {
+    fullName: "User 2",
+    role: "Operator",
+    initial: "2",
+    avatarBg: "bg-purple-600 text-white border-purple-700",
+    avatarBgDark: "bg-purple-600 text-slate-100 border-purple-800",
+    color: "text-purple-600"
+  },
+} as const;
+
 const UserHeader = ({ 
+  currentUser,
   onLogout, 
   isDarkMode, 
-  onToggleDarkMode 
+  onToggleDarkMode,
+  onToggleSidebar,
+  onSwitchUser,
 }: { 
+  currentUser: 'admin' | 'user 1' | 'user 2';
   onLogout: () => void; 
   isDarkMode: boolean; 
   onToggleDarkMode: () => void; 
-}) => (
-  <div className={cn(
-    "flex items-center justify-between px-6 lg:px-10 py-5 z-20 sticky top-0 backdrop-blur-sm select-none transition-all duration-300 border-b",
-    isDarkMode 
-      ? "bg-slate-900/95 border-slate-800/80 text-white" 
-      : "bg-white/95 border-slate-100 text-slate-800"
-  )}>
-    <div className="flex items-center gap-2 text-slate-400 overflow-hidden">
-      <span className="text-[10px] font-bold uppercase tracking-widest hidden sm:inline">Dashboard</span>
-      <span className={cn("hidden sm:inline", isDarkMode ? "text-slate-700" : "text-slate-200")}>/</span>
-      <span className={cn("text-[10px] font-bold uppercase tracking-widest truncate", isDarkMode ? "text-slate-200" : "text-[#0D1E4C]")}>
-        Vendor Analytics
-      </span>
-    </div>
-    <div className="flex items-center gap-4 lg:gap-6">
-      {/* Light/Dark mode toggle button */}
-      <button
-        onClick={onToggleDarkMode}
-        className={cn(
-          "p-2.5 rounded-xl border transition-all cursor-pointer flex items-center justify-center shadow-sm hover:scale-105",
-          isDarkMode
-            ? "border-slate-800 bg-slate-800 text-yellow-400 hover:bg-slate-700"
-            : "border-slate-200 bg-white text-slate-500 hover:bg-slate-50 hover:text-slate-800"
-        )}
-        title={isDarkMode ? "Switch to Light Mode" : "Switch to Dark Mode"}
-      >
-        {isDarkMode ? <SunIcon size={18} /> : <MoonIcon size={18} />}
-      </button>
+  onToggleSidebar: () => void;
+  onSwitchUser: (user: 'admin' | 'user 1' | 'user 2') => void;
+}) => {
+  const [isDropdownOpen, setIsDropdownOpen] = useState(false);
+  const [challengeUser, setChallengeUser] = useState<'admin' | 'user 1' | 'user 2' | null>(null);
+  const [password, setPassword] = useState('');
+  const [error, setError] = useState('');
 
-      <div className="flex items-center gap-4">
-        <div className="flex flex-col items-end hidden sm:flex">
-          <span className={cn("font-bold text-sm leading-tight", isDarkMode ? "text-slate-100" : "text-slate-800")}>Admin User</span>
-          <span className="text-[10px] text-slate-400 font-bold uppercase tracking-tight">System Administrator</span>
-        </div>
-        <div className={cn(
-          "w-10 h-10 rounded-xl flex items-center justify-center font-bold border shadow-sm transition-transform hover:scale-105 cursor-pointer",
-          isDarkMode ? "bg-slate-800 text-slate-100 border-slate-700" : "bg-slate-100 text-slate-700 border-slate-200"
-        )}>
-          A
-        </div>
+  const dropdownRef = useRef<HTMLDivElement>(null);
+
+  // Click outside to close dropdown
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) {
+        setIsDropdownOpen(false);
+      }
+    };
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, []);
+
+  const handleChallengeSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!challengeUser) return;
+    
+    const correctPassword = challengeUser === 'admin' ? '123' : challengeUser === 'user 1' ? '456' : '789';
+    if (password === correctPassword) {
+      onSwitchUser(challengeUser);
+      setChallengeUser(null);
+      setPassword('');
+      setError('');
+      setIsDropdownOpen(false);
+    } else {
+      setError('Incorrect password');
+    }
+  };
+
+  return (
+    <div className={cn(
+      "flex items-center justify-between px-6 lg:px-10 py-5 z-20 sticky top-0 backdrop-blur-sm select-none transition-all duration-300 border-b",
+      isDarkMode 
+        ? "bg-slate-900/95 border-slate-800/80 text-white" 
+        : "bg-white/95 border-slate-100 text-slate-800"
+    )}>
+      <div className="flex items-center gap-2 text-slate-400 overflow-hidden">
+        <button
+          onClick={onToggleSidebar}
+          className={cn(
+            "p-2.5 rounded-xl border transition-all cursor-pointer flex items-center justify-center shadow-sm hover:scale-105 lg:hidden mr-2 shrink-0",
+            isDarkMode
+              ? "border-slate-805 bg-slate-800 text-slate-300 hover:bg-slate-700 hover:text-white"
+              : "border-slate-200 bg-white text-slate-500 hover:bg-slate-50 hover:text-slate-805"
+          )}
+          title="Open Navigation"
+        >
+          <MenuIcon size={18} />
+        </button>
+        <span className="text-[10px] font-bold uppercase tracking-widest hidden sm:inline">Dashboard</span>
+        <span className={cn("hidden sm:inline", isDarkMode ? "text-slate-700" : "text-slate-200")}>/</span>
+        <span className={cn("text-[10px] font-bold uppercase tracking-widest truncate", isDarkMode ? "text-slate-200" : "text-[#0D1E4C]")}>
+          Vendor Analytics
+        </span>
       </div>
-      <div className={cn("h-6 w-px", isDarkMode ? "bg-slate-800" : "bg-slate-200")} />
-      <button 
-        onClick={onLogout} 
-        className={cn(
-          "p-2 rounded-xl transition-all cursor-pointer", 
-          isDarkMode ? "text-slate-400 hover:bg-slate-800 hover:text-red-400" : "text-slate-400 hover:bg-slate-50 hover:text-red-500"
+      <div className="flex items-center gap-4 lg:gap-6">
+        {/* Light/Dark mode toggle button */}
+        <button
+          onClick={onToggleDarkMode}
+          className={cn(
+            "p-2.5 rounded-xl border transition-all cursor-pointer flex items-center justify-center shadow-sm hover:scale-105",
+            isDarkMode
+              ? "border-slate-800 bg-slate-800 text-yellow-400 hover:bg-slate-700"
+              : "border-slate-200 bg-white text-slate-500 hover:bg-slate-50 hover:text-slate-800"
+          )}
+          title={isDarkMode ? "Switch to Light Mode" : "Switch to Dark Mode"}
+        >
+          {isDarkMode ? <SunIcon size={18} /> : <MoonIcon size={18} />}
+        </button>
+
+        {/* User Profile + Dropdown switch */}
+        <div className="relative" ref={dropdownRef}>
+          <div 
+            onClick={() => setIsDropdownOpen(!isDropdownOpen)}
+            className="flex items-center gap-4 cursor-pointer select-none group"
+            title="Switch User"
+          >
+            <div className="flex flex-col items-end hidden sm:flex text-right">
+              <span className={cn("font-bold text-sm leading-tight transition-colors group-hover:text-blue-500 md:group-hover:text-[#005CB9]", isDarkMode ? "text-slate-100 group-hover:text-blue-400" : "text-slate-800")}>
+                {USER_PROFILES[currentUser].fullName}
+              </span>
+              <span className="text-[10px] text-slate-400 font-bold uppercase tracking-tight">
+                {USER_PROFILES[currentUser].role}
+              </span>
+            </div>
+            <div className={cn(
+              "w-10 h-10 rounded-xl flex items-center justify-center font-bold border shadow-sm transition-all hover:scale-105 cursor-pointer ring-offset-2 ring-offset-transparent",
+              isDarkMode 
+                ? `${USER_PROFILES[currentUser].avatarBgDark} border-slate-700 group-hover:ring-2 group-hover:ring-blue-500` 
+                : `${USER_PROFILES[currentUser].avatarBg} border-slate-200 group-hover:ring-2 group-hover:ring-[#005CB9]`
+            )}>
+              {USER_PROFILES[currentUser].initial}
+            </div>
+          </div>
+
+          {/* User selection Dropdown menu */}
+          <AnimatePresence>
+            {isDropdownOpen && (
+              <motion.div
+                initial={{ opacity: 0, y: 10, scale: 0.95 }}
+                animate={{ opacity: 1, y: 0, scale: 1 }}
+                exit={{ opacity: 0, y: 10, scale: 0.95 }}
+                transition={{ duration: 0.15 }}
+                className={cn(
+                  "absolute right-0 mt-3 w-56 rounded-2xl border shadow-2xl p-2.5 z-55 text-left",
+                  isDarkMode 
+                    ? "bg-slate-900 border-slate-800 text-white shadow-black/40" 
+                    : "bg-white border-slate-100 text-[#0c1329] shadow-slate-200/50"
+                )}
+              >
+                <p className={cn(
+                  "text-[9px] font-bold uppercase tracking-widest px-3 pt-1.5 pb-2 border-b mb-1.5",
+                  isDarkMode ? "text-slate-450 border-slate-800" : "text-slate-400 border-slate-100"
+                )}>
+                  Select Profile to Switch
+                </p>
+                <div className="space-y-1">
+                  {(Object.keys(USER_PROFILES) as Array<keyof typeof USER_PROFILES>).map((key) => {
+                    const profile = USER_PROFILES[key];
+                    const isActive = currentUser === key;
+                    return (
+                      <button
+                        key={key}
+                        onClick={() => {
+                          if (isActive) {
+                            setIsDropdownOpen(false);
+                          } else {
+                            setChallengeUser(key);
+                            setError('');
+                            setPassword('');
+                          }
+                        }}
+                        className={cn(
+                          "w-full flex items-center gap-3 px-3 py-2 rounded-xl text-xs font-bold transition-all text-left cursor-pointer",
+                          isActive 
+                            ? (isDarkMode ? "bg-slate-800 text-white" : "bg-slate-100 text-slate-800 cursor-default")
+                            : (isDarkMode ? "hover:bg-slate-800 text-slate-300 hover:text-white" : "hover:bg-slate-50 text-slate-600 hover:text-slate-900")
+                        )}
+                      >
+                        <div className={cn(
+                          "w-7 h-7 rounded-lg flex items-center justify-center font-bold text-[10px] border shrink-0",
+                          isDarkMode ? profile.avatarBgDark : profile.avatarBg
+                        )}>
+                          {profile.initial}
+                        </div>
+                        <div className="flex-1 min-w-0">
+                          <p className="truncate font-sans font-bold">{profile.fullName}</p>
+                          <p className="text-[9px] text-slate-400 font-semibold tracking-wide uppercase">{profile.role}</p>
+                        </div>
+                        {isActive && (
+                          <div className="w-2 h-2 rounded-full bg-emerald-500 shrink-0" />
+                        )}
+                      </button>
+                    );
+                  })}
+                </div>
+              </motion.div>
+            )}
+          </AnimatePresence>
+        </div>
+
+        <div className={cn("h-6 w-px", isDarkMode ? "bg-slate-800" : "bg-slate-200")} />
+        <button 
+          onClick={onLogout} 
+          className={cn(
+            "p-2 rounded-xl transition-all cursor-pointer", 
+            isDarkMode ? "text-slate-400 hover:bg-slate-800 hover:text-red-400" : "text-slate-400 hover:bg-slate-50 hover:text-red-500"
+          )}
+          title="Logout"
+        >
+          <LogOutIcon size={18} />
+        </button>
+      </div>
+
+      {/* Switch User Password verification Modal */}
+      <AnimatePresence>
+        {challengeUser && (
+          <div className="fixed inset-0 z-[300] flex items-center justify-center p-4">
+            {/* Backdrop */}
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              onClick={() => setChallengeUser(null)}
+              className="fixed inset-0 bg-slate-950/60 backdrop-blur-sm"
+            />
+            
+            {/* Modal Body */}
+            <motion.div
+              initial={{ opacity: 0, scale: 0.95, y: 15 }}
+              animate={{ opacity: 1, scale: 1, y: 0 }}
+              exit={{ opacity: 0, scale: 0.95, y: 15 }}
+              transition={{ type: "spring", damping: 25, stiffness: 350 }}
+              className={cn(
+                "w-full max-w-sm rounded-[2.25rem] border shadow-2xl overflow-hidden relative z-10",
+                isDarkMode ? "bg-slate-900 border-slate-800 text-white" : "bg-white border-slate-100 text-slate-800"
+              )}
+            >
+              <div className="p-8">
+                <div className="flex justify-center mb-6">
+                  <div className={cn(
+                    "w-14 h-14 rounded-2xl flex items-center justify-center font-bold text-lg border shadow-sm",
+                    isDarkMode ? USER_PROFILES[challengeUser].avatarBgDark : USER_PROFILES[challengeUser].avatarBg
+                  )}>
+                    {USER_PROFILES[challengeUser].initial}
+                  </div>
+                </div>
+                
+                <h3 className={cn("text-xl font-bold text-center tracking-tight mb-1", isDarkMode ? "text-slate-100" : "text-[#0D1E4C]")}>
+                  Switch to {USER_PROFILES[challengeUser].fullName}
+                </h3>
+                <p className="text-center text-slate-400 text-[10px] font-bold uppercase tracking-widest mb-6">
+                  Authentication Required
+                </p>
+
+                <form onSubmit={handleChallengeSubmit} className="space-y-4">
+                  <div>
+                    <label className="text-[9px] font-bold text-slate-400 uppercase tracking-[0.2em] block mb-2 px-1">
+                      Enter Password
+                    </label>
+                    <input
+                      type="password"
+                      autoFocus
+                      required
+                      value={password}
+                      onChange={(e) => setPassword(e.target.value)}
+                      className={cn(
+                        "w-full px-5 py-3.5 rounded-xl border outline-none text-xs font-bold transition-all font-mono",
+                        isDarkMode 
+                          ? "border-slate-700 bg-slate-850 text-slate-100 focus:ring-2 focus:ring-slate-800 placeholder:text-slate-500" 
+                          : "border-slate-200 bg-slate-50 text-slate-700 focus:ring-2 focus:ring-blue-100"
+                      )}
+                      placeholder="••••••••"
+                    />
+                  </div>
+
+                  {error && (
+                    <p className="text-[#E4002B] text-xs font-bold text-center mt-1">
+                      {error}
+                    </p>
+                  )}
+
+                  <div className="flex gap-3 pt-2">
+                    <button
+                      type="button"
+                      onClick={() => setChallengeUser(null)}
+                      className={cn(
+                        "flex-1 px-5 py-3 rounded-xl text-xs font-bold uppercase tracking-wider border transition-all cursor-pointer",
+                        isDarkMode 
+                          ? "border-slate-700 hover:bg-slate-800 text-slate-300"
+                          : "border-slate-200 hover:bg-slate-50 text-slate-650"
+                      )}
+                    >
+                      Cancel
+                    </button>
+                    <button
+                      type="submit"
+                      className="flex-1 px-5 py-3 bg-[#005CB9] hover:bg-[#004A99] text-white rounded-xl text-xs font-bold uppercase tracking-wider transition-all shadow-md cursor-pointer"
+                    >
+                      Confirm
+                    </button>
+                  </div>
+                </form>
+              </div>
+            </motion.div>
+          </div>
         )}
-      >
-        <LogOutIcon size={18} />
-      </button>
+      </AnimatePresence>
     </div>
-  </div>
-);
+  );
+};
 
 // ============================================================
 // CHART HELPERS
@@ -909,15 +1249,20 @@ const Toast = ({ message, type, onClose, isDarkMode }: { message: string; type: 
   </motion.div>
 );
 
-const LoginPage = ({ onLogin, isDarkMode, onToggleDarkMode }: { onLogin: () => void; isDarkMode?: boolean; onToggleDarkMode?: () => void }) => {
+const LoginPage = ({ onLogin, isDarkMode, onToggleDarkMode }: { onLogin: (user: 'admin' | 'user 1' | 'user 2') => void; isDarkMode?: boolean; onToggleDarkMode?: () => void }) => {
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    if (username === 'admin' && password === '123') {
-      onLogin();
+    const normalizedUsername = username.toLowerCase().trim();
+    if (normalizedUsername === 'admin' && password === '123') {
+      onLogin('admin');
+    } else if (normalizedUsername === 'user 1' && password === '456') {
+      onLogin('user 1');
+    } else if (normalizedUsername === 'user 2' && password === '789') {
+      onLogin('user 2');
     } else {
       setError('Invalid username or password');
     }
@@ -1018,8 +1363,15 @@ export default function App() {
     });
   };
 
-  const [isAuthenticated, setIsAuthenticated] = useState(false);
+  const [currentUser, setCurrentUser] = useState<'admin' | 'user 1' | 'user 2'>(() => {
+    return (localStorage.getItem('currentUser') as 'admin' | 'user 1' | 'user 2') || 'admin';
+  });
+
+  const [isAuthenticated, setIsAuthenticated] = useState(() => {
+    return localStorage.getItem('isAuthenticated') === 'true';
+  });
   const [activeTab, setActiveTab] = useState('Overview');
+  const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   const [vendors, setVendors] = useState<VendorRow[]>([]);
   const [vendorDetails, setVendorDetails] = useState<Record<string, FileDetail[]>>({});
   const [isUploadModalOpen, setIsUploadModalOpen] = useState(false);
@@ -1315,7 +1667,11 @@ export default function App() {
     ];
   }, [vendors]);
 
-  const handleTabChange = (tab: string) => { setActiveTab(tab); setSelectedVendor(null); };
+  const handleTabChange = (tab: string) => { 
+    setActiveTab(tab); 
+    setSelectedVendor(null); 
+    setIsSidebarOpen(false);
+  };
 
   // ---- Export vendor details as CSV ----
   const handleExportVendorCSV = () => {
@@ -1359,7 +1715,18 @@ export default function App() {
   // RENDER
   // ============================================================
   if (!isAuthenticated) {
-    return <LoginPage onLogin={() => setIsAuthenticated(true)} isDarkMode={isDarkMode} onToggleDarkMode={toggleDarkMode} />;
+    return (
+      <LoginPage 
+        onLogin={(user) => {
+          setCurrentUser(user);
+          setIsAuthenticated(true);
+          localStorage.setItem('currentUser', user);
+          localStorage.setItem('isAuthenticated', 'true');
+        }} 
+        isDarkMode={isDarkMode} 
+        onToggleDarkMode={toggleDarkMode} 
+      />
+    );
   }
 
   return (
@@ -1372,10 +1739,24 @@ export default function App() {
         </div>
       )}
 
-      <Sidebar activeTab={activeTab} onTabChange={handleTabChange} isDarkMode={isDarkMode} />
+      <Sidebar activeTab={activeTab} onTabChange={handleTabChange} isDarkMode={isDarkMode} isOpen={isSidebarOpen} onClose={() => setIsSidebarOpen(false)} />
 
       <main className="flex-1 flex flex-col min-w-0">
-        <UserHeader onLogout={() => setIsAuthenticated(false)} isDarkMode={isDarkMode} onToggleDarkMode={toggleDarkMode} />
+        <UserHeader 
+          currentUser={currentUser}
+          onLogout={() => {
+            setIsAuthenticated(false);
+            localStorage.removeItem('isAuthenticated');
+          }} 
+          isDarkMode={isDarkMode} 
+          onToggleDarkMode={toggleDarkMode} 
+          onToggleSidebar={() => setIsSidebarOpen(!isSidebarOpen)} 
+          onSwitchUser={(user) => {
+            setCurrentUser(user);
+            localStorage.setItem('currentUser', user);
+            showToast(`Switched profile to ${user === 'admin' ? 'Admin User' : user === 'user 1' ? 'User 1' : 'User 2'}`, 'success');
+          }}
+        />
 
         <div className="px-6 lg:px-10 py-8 w-full max-w-[1600px] mx-auto overflow-hidden">
 
