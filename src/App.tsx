@@ -32,6 +32,7 @@ import {
   SunIcon,
   MoonIcon,
   MenuIcon,
+  SparklesIcon,
 } from 'lucide-react';
 import {
   BarChart,
@@ -45,6 +46,7 @@ import {
   Cell,
 } from 'recharts';
 import { motion, AnimatePresence } from 'motion/react';
+import PdfToJsonConverter from './components/PdfToJsonConverter';
 
 // --- Utility ---
 function cn(...classes: (string | boolean | undefined | null)[]): string {
@@ -127,14 +129,44 @@ const Sidebar = ({
   onTabChange, 
   isDarkMode, 
   isOpen, 
-  onClose 
+  onClose,
+  currentUser,
 }: { 
   activeTab: string; 
   onTabChange: (tab: string) => void; 
   isDarkMode: boolean; 
   isOpen: boolean; 
   onClose: () => void; 
-}) => (
+  currentUser: 'admin' | 'user 1' | 'user 2';
+}) => {
+  const isOperator = currentUser === 'user 1' || currentUser === 'user 2';
+
+  const userColors = useMemo(() => {
+    if (currentUser === 'user 1') {
+      return {
+        logoBg: 'bg-teal-600 shadow-teal-100/50',
+        activeLinkClass: 'bg-teal-600 text-white shadow-lg shadow-teal-200/50',
+        hoverTextClass: 'hover:text-teal-600',
+        storageFill: 'bg-teal-500',
+      };
+    } else if (currentUser === 'user 2') {
+      return {
+        logoBg: 'bg-purple-600 shadow-purple-100/50',
+        activeLinkClass: 'bg-purple-600 text-white shadow-lg shadow-purple-200/50',
+        hoverTextClass: 'hover:text-purple-600',
+        storageFill: 'bg-purple-600',
+      };
+    } else {
+      return {
+        logoBg: 'bg-[#005CB9] shadow-blue-100',
+        activeLinkClass: 'bg-[#005CB9] text-white shadow-lg shadow-blue-200',
+        hoverTextClass: 'hover:text-[#005CB9]',
+        storageFill: 'bg-[#00B5E2]',
+      };
+    }
+  }, [currentUser]);
+
+  return (
   <>
     {/* Desktop Sidebar: stays static and visible on lg+ */}
     <div className={cn(
@@ -145,7 +177,7 @@ const Sidebar = ({
     )}>
       <div className="p-8 pb-4 flex items-center gap-3">
         <div className="flex items-center gap-2 cursor-pointer" onClick={() => onTabChange('Overview')}>
-          <div className="w-10 h-10 rounded-xl bg-[#005CB9] flex items-center justify-center shadow-lg shadow-blue-100">
+          <div className={cn("w-10 h-10 rounded-xl flex items-center justify-center shadow-lg", userColors.logoBg)}>
             <DatabaseIcon className="text-white" size={20} />
           </div>
           <span className={cn("text-2xl font-bold tracking-tight", isDarkMode ? "text-slate-50" : "text-[#0D1E4C]")}>INCYTE</span>
@@ -153,8 +185,11 @@ const Sidebar = ({
       </div>
       <div className="mt-12 px-6 space-y-1">
         <p className="text-[10px] font-bold text-slate-400 uppercase tracking-[0.2em] px-4 mb-4">Analytics</p>
-        <SidebarLink icon={<LayoutDashboardIcon size={18} />} label="Overview" active={activeTab === 'Overview'} onClick={() => onTabChange('Overview')} isDarkMode={isDarkMode} />
-        <SidebarLink icon={<BarChart3Icon size={18} />} label="Performance" active={activeTab === 'Performance'} onClick={() => onTabChange('Performance')} isDarkMode={isDarkMode} />
+        <SidebarLink icon={<LayoutDashboardIcon size={18} />} label="Overview" active={activeTab === 'Overview'} onClick={() => onTabChange('Overview')} isDarkMode={isDarkMode} activeBgClass={userColors.activeLinkClass} hoverTextClass={userColors.hoverTextClass} />
+        {!isOperator && (
+          <SidebarLink icon={<BarChart3Icon size={18} />} label="Performance" active={activeTab === 'Performance'} onClick={() => onTabChange('Performance')} isDarkMode={isDarkMode} activeBgClass={userColors.activeLinkClass} hoverTextClass={userColors.hoverTextClass} />
+        )}
+        <SidebarLink icon={<SparklesIcon size={18} />} label="PDF to JSON" active={activeTab === 'PDF to JSON'} onClick={() => onTabChange('PDF to JSON')} isDarkMode={isDarkMode} activeBgClass={userColors.activeLinkClass} hoverTextClass={userColors.hoverTextClass} />
       </div>
       <div className="mt-auto p-6">
         <div className={cn(
@@ -163,7 +198,7 @@ const Sidebar = ({
         )}>
           <p className="text-[10px] font-bold text-slate-400 uppercase mb-2">Storage</p>
           <div className={cn("h-1.5 w-full rounded-full overflow-hidden mb-2", isDarkMode ? "bg-slate-800" : "bg-slate-200")}>
-            <div className="h-full bg-[#00B5E2] rounded-full w-[65%]" />
+            <div className={cn("h-full rounded-full w-[65%]", userColors.storageFill)} />
           </div>
           <p className={cn("text-[10px] font-bold", isDarkMode ? "text-slate-400" : "text-slate-600")}>65% of 10GB used</p>
         </div>
@@ -199,7 +234,7 @@ const Sidebar = ({
             {/* Header with Close option for easy accessibility */}
             <div className="p-8 pb-4 flex items-center justify-between">
               <div className="flex items-center gap-2 cursor-pointer" onClick={() => { onTabChange('Overview'); onClose(); }}>
-                <div className="w-10 h-10 rounded-xl bg-[#005CB9] flex items-center justify-center shadow-lg shadow-blue-100">
+                <div className={cn("w-10 h-10 rounded-xl flex items-center justify-center shadow-lg", userColors.logoBg)}>
                   <DatabaseIcon className="text-white" size={20} />
                 </div>
                 <span className={cn("text-2xl font-bold tracking-tight", isDarkMode ? "text-slate-50" : "text-[#0D1E4C]")}>INCYTE</span>
@@ -217,8 +252,11 @@ const Sidebar = ({
 
             <div className="mt-12 px-6 space-y-1">
               <p className="text-[10px] font-bold text-slate-400 uppercase tracking-[0.2em] px-4 mb-4">Analytics</p>
-              <SidebarLink icon={<LayoutDashboardIcon size={18} />} label="Overview" active={activeTab === 'Overview'} onClick={() => { onTabChange('Overview'); onClose(); }} isDarkMode={isDarkMode} />
-              <SidebarLink icon={<BarChart3Icon size={18} />} label="Performance" active={activeTab === 'Performance'} onClick={() => { onTabChange('Performance'); onClose(); }} isDarkMode={isDarkMode} />
+              <SidebarLink icon={<LayoutDashboardIcon size={18} />} label="Overview" active={activeTab === 'Overview'} onClick={() => { onTabChange('Overview'); onClose(); }} isDarkMode={isDarkMode} activeBgClass={userColors.activeLinkClass} hoverTextClass={userColors.hoverTextClass} />
+              {!isOperator && (
+                <SidebarLink icon={<BarChart3Icon size={18} />} label="Performance" active={activeTab === 'Performance'} onClick={() => { onTabChange('Performance'); onClose(); }} isDarkMode={isDarkMode} activeBgClass={userColors.activeLinkClass} hoverTextClass={userColors.hoverTextClass} />
+              )}
+              <SidebarLink icon={<SparklesIcon size={18} />} label="PDF to JSON" active={activeTab === 'PDF to JSON'} onClick={() => { onTabChange('PDF to JSON'); onClose(); }} isDarkMode={isDarkMode} activeBgClass={userColors.activeLinkClass} hoverTextClass={userColors.hoverTextClass} />
             </div>
 
             <div className="mt-auto p-6">
@@ -228,7 +266,7 @@ const Sidebar = ({
               )}>
                 <p className="text-[10px] font-bold text-slate-400 uppercase mb-2">Storage</p>
                 <div className={cn("h-1.5 w-full rounded-full overflow-hidden mb-2", isDarkMode ? "bg-slate-800" : "bg-slate-200")}>
-                  <div className="h-full bg-[#00B5E2] rounded-full w-[65%]" />
+                  <div className={cn("h-full rounded-full w-[65%]", userColors.storageFill)} />
                 </div>
                 <p className={cn("text-[10px] font-bold", isDarkMode ? "text-slate-400" : "text-slate-600")}>65% of 10GB used</p>
               </div>
@@ -238,19 +276,36 @@ const Sidebar = ({
       )}
     </AnimatePresence>
   </>
-);
+  );
+};
 
-const SidebarLink = ({ icon, label, active, onClick, isDarkMode }: { icon: React.ReactNode; label: string; active?: boolean; onClick: () => void; isDarkMode?: boolean }) => (
+const SidebarLink = ({ 
+  icon, 
+  label, 
+  active, 
+  onClick, 
+  isDarkMode,
+  activeBgClass,
+  hoverTextClass,
+}: { 
+  icon: React.ReactNode; 
+  label: string; 
+  active?: boolean; 
+  onClick: () => void; 
+  isDarkMode?: boolean;
+  activeBgClass?: string;
+  hoverTextClass?: string;
+}) => (
   <button
     onClick={onClick}
     className={cn(
       'w-full flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-bold transition-all group cursor-pointer',
       active 
-        ? 'bg-[#005CB9] text-white shadow-lg shadow-blue-200' 
-        : (isDarkMode ? 'text-slate-400 hover:bg-slate-800 hover:text-white' : 'text-slate-500 hover:bg-slate-50 hover:text-[#005CB9]')
+        ? (activeBgClass || 'bg-[#005CB9] text-white shadow-lg shadow-blue-200') 
+        : (isDarkMode ? 'text-slate-400 hover:bg-slate-800 hover:text-white' : `text-slate-500 hover:bg-slate-50 ${hoverTextClass || 'hover:text-[#005CB9]'}`)
     )}
   >
-    <span className={cn('transition-colors', active ? 'text-white' : 'text-slate-300 group-hover:text-[#00B5E2]')}>{icon}</span>
+    <span className={cn('transition-colors', active ? 'text-white' : (hoverTextClass ? `text-slate-300 group-hover:${hoverTextClass.replace('hover:', '')}` : 'text-slate-300 group-hover:text-[#00B5E2]'))}>{icon}</span>
     {label}
   </button>
 );
@@ -1348,6 +1403,470 @@ const LoginPage = ({ onLogin, isDarkMode, onToggleDarkMode }: { onLogin: (user: 
 };
 
 // ============================================================
+// OPERATOR INBOUND DASHBOARD (USER 1 & USER 2 VIEW)
+// ============================================================
+interface OperatorInboundDashboardProps {
+  isDarkMode: boolean;
+  currentUser: 'user 1' | 'user 2';
+  vendors: string[];
+  onManualUpload: (data: { vendor: string; fileName: string; dataCount: number; status?: 'Correct' }) => Promise<void>;
+  onExcelUpload: (vendor: string, file: File) => Promise<void>;
+  isUploading: boolean;
+  setActiveTab: (tab: string) => void;
+}
+
+const OperatorInboundDashboard = ({
+  isDarkMode,
+  currentUser,
+  vendors,
+  onManualUpload,
+  onExcelUpload,
+  isUploading,
+  setActiveTab,
+}: OperatorInboundDashboardProps) => {
+  // Manual form state
+  const [manualVendorSelect, setManualVendorSelect] = useState(vendors[0] || '');
+  const [customManualVendor, setCustomManualVendor] = useState('');
+  const [useCustomManual, setUseCustomManual] = useState(false);
+  const [fileName, setFileName] = useState('');
+  const [dataCount, setDataCount] = useState<number>(0);
+
+  // Excel form state
+  const [excelVendorSelect, setExcelVendorSelect] = useState(vendors[0] || '');
+  const [customExcelVendor, setCustomExcelVendor] = useState('');
+  const [useCustomExcel, setUseCustomExcel] = useState(false);
+  const [selectedFile, setSelectedFile] = useState<File | null>(null);
+  const opFileInputRef = useRef<HTMLInputElement>(null);
+
+  // Keep dropdown values in sync with fetched vendors list
+  useEffect(() => {
+    if (!manualVendorSelect && vendors.length > 0) {
+      setManualVendorSelect(vendors[0]);
+    }
+    if (!excelVendorSelect && vendors.length > 0) {
+      setExcelVendorSelect(vendors[0]);
+    }
+  }, [vendors]);
+
+  const handleManualSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    const finalVendor = useCustomManual ? customManualVendor.trim() : manualVendorSelect;
+    if (!finalVendor) return;
+    await onManualUpload({
+      vendor: finalVendor,
+      fileName: fileName || 'DATA_SET_PRIMARY.CSV',
+      dataCount: dataCount || 0,
+      status: 'Correct',
+    });
+    // Clear fields
+    setFileName('');
+    setDataCount(0);
+  };
+
+  const handleExcelDrop = (e: React.DragEvent) => {
+    e.preventDefault();
+    const f = e.dataTransfer.files?.[0];
+    if (f && (f.name.endsWith('.xlsx') || f.name.endsWith('.xls') || f.name.endsWith('.csv'))) {
+      setSelectedFile(f);
+    }
+  };
+
+  const handleExcelSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    const finalVendor = useCustomExcel ? customExcelVendor.trim() : excelVendorSelect;
+    if (!finalVendor || !selectedFile) return;
+    await onExcelUpload(finalVendor, selectedFile);
+    setSelectedFile(null);
+    if (opFileInputRef.current) opFileInputRef.current.value = '';
+  };
+
+  // Dynamically compute the color combinations & profile accents based on the logged-in Operator User
+  const theme = useMemo(() => {
+    if (currentUser === 'user 1') {
+      return {
+        slug: 'user-1' as const,
+        primaryHex: '#00A19D',
+        primaryBg: 'bg-teal-600',
+        hoverBg: 'hover:bg-teal-700',
+        textPrimary: 'text-teal-600',
+        textSecondary: 'text-teal-500',
+        borderPrimary: 'border-teal-600',
+        ringFocus: 'focus:ring-teal-100',
+        shadowPrimary: 'shadow-teal-105/40',
+        ambientGlow: isDarkMode ? 'bg-teal-950/20' : 'bg-teal-50/40',
+        dropzoneBgActive: isDarkMode ? 'bg-teal-950/20' : 'bg-teal-50/50',
+        dropzoneBorderActive: 'border-teal-600',
+        btnAccent: isDarkMode 
+          ? 'bg-slate-800 border-slate-705 text-slate-300 hover:bg-slate-700 hover:text-white' 
+          : 'bg-white border-slate-200 text-teal-600 hover:bg-teal-50/20 hover:border-teal-300 shadow-sm',
+      };
+    } else {
+      return {
+        slug: 'user-2' as const,
+        primaryHex: '#7C3AED',
+        primaryBg: 'bg-purple-600',
+        hoverBg: 'hover:bg-purple-700',
+        textPrimary: 'text-purple-600',
+        textSecondary: 'text-purple-500',
+        borderPrimary: 'border-purple-600',
+        ringFocus: 'focus:ring-purple-100',
+        shadowPrimary: 'shadow-purple-105/40',
+        ambientGlow: isDarkMode ? 'bg-purple-950/20' : 'bg-purple-50/40',
+        dropzoneBgActive: isDarkMode ? 'bg-purple-950/20' : 'bg-purple-50/50',
+        dropzoneBorderActive: 'border-purple-600',
+        btnAccent: isDarkMode 
+          ? 'bg-slate-800 border-slate-705 text-slate-350 hover:bg-slate-700 hover:text-white' 
+          : 'bg-white border-slate-200 text-purple-600 hover:bg-purple-50/20 hover:border-purple-300 shadow-sm',
+      };
+    }
+  }, [currentUser, isDarkMode]);
+
+  return (
+    <div className="space-y-10">
+      {/* Hero Header */}
+      <div className={cn(
+        "rounded-[2.5rem] p-8 lg:p-12 border shadow-sm relative overflow-hidden select-none transition-all duration-300",
+        isDarkMode ? "bg-slate-900 border-slate-800" : "bg-white border-slate-100"
+      )}>
+        <div className="relative z-10 flex flex-col md:flex-row justify-between md:items-center gap-8">
+          <div className="flex items-center gap-6 lg:gap-10">
+            <div className={cn(
+              "p-6 rounded-3xl shadow-2xl shrink-0 transition-all",
+              isDarkMode ? `${theme.primaryBg} shadow-black/20` : `${theme.primaryBg} ${theme.shadowPrimary}`
+            )}>
+              <UploadIcon className="w-10 h-10 text-white" />
+            </div>
+            <div>
+              <h1 className={cn("text-3xl lg:text-4xl font-extrabold leading-none mb-3 tracking-tight uppercase", isDarkMode ? "text-slate-100" : "text-[#0D1E4C]")}>
+                Operator Ingest Hub
+              </h1>
+              <div className="flex flex-wrap items-center gap-3">
+                <span className="text-[10px] font-bold uppercase tracking-[0.2em] text-slate-400">AUTHORIZED INGESTION PLATFORM</span>
+                <div className={cn("w-1.5 h-1.5 rounded-full", isDarkMode ? "bg-slate-700" : "bg-slate-200")} />
+                <span className={cn("text-[10px] font-bold uppercase tracking-[0.2em]", theme.textPrimary)}>SECURE TERMINAL</span>
+              </div>
+            </div>
+          </div>
+
+          <div className="flex flex-wrap items-center gap-4">
+            <button
+              onClick={() => window.open('https://outlook.office.com/mail/', '_blank')}
+              className={theme.btnAccent}
+            >
+              <MailIcon size={16} />
+              OUTLOOK EMAIL
+            </button>
+            <button
+              onClick={() => setActiveTab('PDF to JSON')}
+              className={cn(
+                "flex items-center justify-center gap-3 px-6 py-3.5 border rounded-2xl text-xs font-bold transition-all hover:scale-[1.02] group cursor-pointer h-12",
+                isDarkMode 
+                  ? "bg-violet-950/40 border-violet-850 text-violet-350 hover:bg-violet-900/60" 
+                  : "bg-violet-50/50 border-violet-100 text-[#6366F1] hover:bg-violet-100/60 shadow-sm"
+              )}
+            >
+              <SparklesIcon size={16} className="text-violet-500 animate-pulse" />
+              PDF CONVERTER
+            </button>
+          </div>
+        </div>
+        <div className={cn("absolute -top-24 -right-24 w-96 h-96 rounded-full blur-[80px]", theme.ambientGlow)} />
+      </div>
+
+      {/* Grid of upload fields with consistent 20px gap spacing */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-5">
+        
+        {/* Manual Data Ingestion Form (using Card 1's Yellow-Frame combination) */}
+        <div className={cn(
+          "rounded-[2.5rem] p-10 border shadow-sm transition-all duration-300 flex flex-col justify-between",
+          isDarkMode 
+            ? "bg-yellow-950/20 border-yellow-800/30 text-yellow-100 shadow-yellow-950/10" 
+            : "bg-[#FFFDE8] border-[#F8EEB2] text-[#5A4D11] shadow-yellow-105/10"
+        )}>
+          <div>
+            <div className="flex items-center justify-between mb-6">
+              <h2 className={cn("text-xl font-bold flex items-center gap-3", isDarkMode ? "text-yellow-105" : "text-[#5A4D11]")}>
+                <PlusIcon className="text-yellow-500 shrink-0" size={24} />
+                Manual Log Insertion
+              </h2>
+              <span className={cn(
+                "px-2.5 py-1 rounded-full text-[9px] font-bold uppercase tracking-wider",
+                isDarkMode ? "bg-yellow-950/60 text-yellow-400" : "bg-yellow-100/80 text-yellow-800"
+              )}>Active Manual Ingest</span>
+            </div>
+            <p className={cn("text-xs font-medium mb-8 leading-relaxed", isDarkMode ? "text-yellow-400/80" : "text-yellow-900/80")}>
+              Inject singular structured file audits manually compiled directly into the central datastore.
+            </p>
+
+            <form onSubmit={handleManualSubmit} className="space-y-6">
+              {/* Destination Vendor */}
+              <div className="space-y-2">
+                <div className="flex justify-between items-center">
+                  <label className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Destination Vendor</label>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setUseCustomManual(!useCustomManual);
+                      if (useCustomManual && vendors.length > 0) {
+                        setManualVendorSelect(vendors[0]);
+                      }
+                    }}
+                    className={cn("text-[10px] font-bold hover:underline cursor-pointer", theme.textPrimary)}
+                  >
+                    {useCustomManual ? "Select from list" : "Type custom vendor name"}
+                  </button>
+                </div>
+
+                {useCustomManual ? (
+                  <input
+                    type="text"
+                    required
+                    placeholder="ENTER CUSTOM VENDOR NAME"
+                    value={customManualVendor}
+                    onChange={(e) => setCustomManualVendor(e.target.value)}
+                    className={cn(
+                      "w-full px-5 py-3.5 rounded-2xl border outline-none text-xs font-bold transition-all uppercase placeholder:text-slate-400",
+                      isDarkMode ? "bg-slate-850 border-slate-700 text-slate-100 focus:ring-4 focus:ring-slate-800" : `bg-white border-yellow-250 text-[#0c1329] focus:ring-4 ${theme.ringFocus}`
+                    )}
+                  />
+                ) : (
+                  <select
+                    value={manualVendorSelect}
+                    onChange={(e) => setManualVendorSelect(e.target.value)}
+                    className={cn(
+                      "w-full px-5 py-3.5 rounded-2xl border outline-none text-xs font-bold transition-all cursor-pointer",
+                      isDarkMode ? "bg-slate-850 border-slate-700 text-slate-100 focus:ring-4 focus:ring-slate-800 text-slate-100" : `bg-white border-yellow-250 text-[#0c1329] focus:ring-4 ${theme.ringFocus}`
+                    )}
+                  >
+                    {vendors.length === 0 ? (
+                      <option value="">No vendors existing. Use custom type instead.</option>
+                    ) : (
+                      vendors.map((v) => (
+                        <option key={v} value={v} className={isDarkMode ? "bg-slate-900 text-slate-150" : ""}>
+                          {v.toUpperCase()}
+                        </option>
+                      ))
+                    )}
+                  </select>
+                )}
+              </div>
+
+              {/* File Name */}
+              <div className="space-y-2">
+                <label className="text-[10px] font-bold text-slate-400 uppercase tracking-wider block">File Identifier</label>
+                <input
+                  type="text"
+                  required
+                  placeholder="E.G. TRANSACTIONS_PART_1.CSV"
+                  value={fileName}
+                  onChange={(e) => setFileName(e.target.value)}
+                  className={cn(
+                    "w-full px-5 py-3.5 rounded-2xl border outline-none text-xs font-bold transition-all uppercase font-mono placeholder:text-slate-400",
+                    isDarkMode ? "bg-slate-850 border-slate-700 text-slate-100 focus:ring-4 focus:ring-slate-800" : `bg-white border-yellow-250 text-[#0c1329] focus:ring-4 ${theme.ringFocus}`
+                  )}
+                />
+              </div>
+
+              {/* Record Count */}
+              <div className="space-y-2">
+                <label className="text-[10px] font-bold text-slate-400 uppercase tracking-wider block">Record Count / Items</label>
+                <input
+                  type="number"
+                  min="1"
+                  required
+                  value={dataCount || ""}
+                  onChange={(e) => setDataCount(parseInt(e.target.value) || 0)}
+                  placeholder="0"
+                  className={cn(
+                    "w-full px-5 py-3.5 rounded-2xl border outline-none text-xs font-bold transition-all placeholder:text-slate-404",
+                    isDarkMode ? "bg-slate-850 border-slate-700 text-slate-100 focus:ring-4 focus:ring-slate-800" : `bg-white border-yellow-250 text-[#0c1329] focus:ring-4 ${theme.ringFocus}`
+                  )}
+                />
+              </div>
+
+              <div className="pt-4">
+                <button
+                  type="submit"
+                  disabled={isUploading || (!useCustomManual && !manualVendorSelect) || (useCustomManual && !customManualVendor.trim())}
+                  className={cn(
+                    "w-full py-4 rounded-2xl text-xs font-bold uppercase tracking-[0.2em] transition-all hover:scale-[1.01] shadow-xl flex items-center justify-center gap-2 cursor-pointer h-14",
+                    isUploading || (!useCustomManual && !manualVendorSelect) || (useCustomManual && !customManualVendor.trim())
+                      ? "bg-slate-400 text-white shadow-none cursor-not-allowed"
+                      : `${theme.primaryBg} ${theme.hoverBg} text-white ${theme.shadowPrimary}`
+                  )}
+                >
+                  {isUploading ? "Processing..." : "Submit File Receipt"}
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+
+        {/* Excel Spreadsheet File Upload Form (using Card 2's Green-Frame combination) */}
+        <div className={cn(
+          "rounded-[2.5rem] p-10 border shadow-sm transition-all duration-300 flex flex-col justify-between",
+          isDarkMode 
+            ? "bg-emerald-950/20 border-emerald-800/30 text-emerald-100 shadow-emerald-950/10" 
+            : "bg-[#EFFCEB] border-[#D4F5C9] text-[#1C4C18] shadow-emerald-105/10"
+        )}>
+          <div>
+            <div className="flex items-center justify-between mb-6">
+              <h2 className={cn("text-xl font-bold flex items-center gap-3", isDarkMode ? "text-emerald-105" : "text-[#1C4C18]")}>
+                <FileSpreadsheetIcon className={cn("shrink-0", theme.textPrimary)} size={24} />
+                Bulk Spreadsheet Upload
+              </h2>
+              <span className={cn(
+                "px-2.5 py-1 rounded-full text-[9px] font-bold uppercase tracking-wider",
+                isDarkMode ? "bg-emerald-950/60 text-emerald-400" : "bg-emerald-100/80 text-emerald-800"
+              )}>Active Excel Upload</span>
+            </div>
+            <p className={cn("text-xs font-medium mb-8 leading-relaxed", isDarkMode ? "text-emerald-400/80" : "text-emerald-900/80")}>
+              Upload rich audit worksheets in Excel (`.xlsx`, `.xls`) or CSV formats to auto-parse and log database entries.
+            </p>
+
+            <form onSubmit={handleExcelSubmit} className="space-y-6">
+              {/* Destination Vendor */}
+              <div className="space-y-2">
+                <div className="flex justify-between items-center">
+                  <label className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Destination Vendor</label>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setUseCustomExcel(!useCustomExcel);
+                      if (useCustomExcel && vendors.length > 0) {
+                        setExcelVendorSelect(vendors[0]);
+                      }
+                    }}
+                    className={cn("text-[10px] font-bold hover:underline cursor-pointer", theme.textPrimary)}
+                  >
+                    {useCustomExcel ? "Select from list" : "Type custom vendor name"}
+                  </button>
+                </div>
+
+                {useCustomExcel ? (
+                  <input
+                    type="text"
+                    required
+                    placeholder="ENTER CUSTOM VENDOR NAME"
+                    value={customExcelVendor}
+                    onChange={(e) => setCustomExcelVendor(e.target.value)}
+                    className={cn(
+                      "w-full px-5 py-3.5 rounded-2xl border outline-none text-xs font-bold transition-all uppercase placeholder:text-slate-400",
+                      isDarkMode ? "bg-slate-850 border-slate-700 text-slate-100 focus:ring-4 focus:ring-slate-800" : `bg-white border-emerald-250 text-[#0c1329] focus:ring-4 ${theme.ringFocus}`
+                    )}
+                  />
+                ) : (
+                  <select
+                    value={excelVendorSelect}
+                    onChange={(e) => setExcelVendorSelect(e.target.value)}
+                    className={cn(
+                      "w-full px-5 py-3.5 rounded-2xl border outline-none text-xs font-bold transition-all cursor-pointer",
+                      isDarkMode ? "bg-slate-850 border-slate-700 text-slate-100 focus:ring-4 focus:ring-slate-800 text-slate-100" : `bg-white border-emerald-250 text-[#0c1329] focus:ring-4 ${theme.ringFocus}`
+                    )}
+                  >
+                    {vendors.length === 0 ? (
+                      <option value="">No vendors existing. Use custom type instead.</option>
+                    ) : (
+                      vendors.map((v) => (
+                        <option key={v} value={v} className={isDarkMode ? "bg-slate-900 text-slate-150" : ""}>
+                          {v.toUpperCase()}
+                        </option>
+                      ))
+                    )}
+                  </select>
+                )}
+              </div>
+
+              {/* Excel Dropzone */}
+              <div className="space-y-2">
+                <label className="text-[10px] font-bold text-slate-400 uppercase tracking-wider block">Excel / CSV Spreadsheet File</label>
+                <div
+                  onDrop={handleExcelDrop}
+                  onDragOver={(e) => e.preventDefault()}
+                  onClick={() => opFileInputRef.current?.click()}
+                  className={cn(
+                    'w-full rounded-2xl border-2 border-dashed p-10 flex flex-col items-center justify-center cursor-pointer transition-all min-h-[160px]',
+                    selectedFile 
+                      ? (isDarkMode ? `${theme.dropzoneBorderActive} ${theme.dropzoneBgActive}` : `${theme.dropzoneBorderActive} ${theme.dropzoneBgActive}`) 
+                      : (isDarkMode ? 'border-slate-800 hover:border-slate-700 bg-slate-850 hover:bg-slate-800/60 text-slate-300' : 'border-emerald-250 hover:border-emerald-350 bg-white/40 hover:bg-white/80')
+                  )}
+                >
+                  <input ref={opFileInputRef} type="file" accept=".xlsx,.xls,.csv" className="hidden" onChange={(e) => setSelectedFile(e.target.files?.[0] || null)} />
+                  {selectedFile ? (
+                    <>
+                      <FileSpreadsheetIcon size={32} className={cn("mb-3 animate-bounce", theme.textPrimary)} />
+                      <p className={cn("text-xs font-extrabold text-center truncate max-w-full font-mono", isDarkMode ? "text-slate-100" : "text-[#0c1329]")}>{selectedFile.name}</p>
+                      <p className="text-[10px] font-bold text-slate-500 uppercase tracking-widest mt-1">{(selectedFile.size / 1024).toFixed(1)} KB</p>
+                      <button
+                        type="button"
+                        onClick={(e) => { e.stopPropagation(); setSelectedFile(null); if (opFileInputRef.current) opFileInputRef.current.value = ''; }}
+                        className="mt-3 text-[10px] font-extrabold text-[#E4002B] hover:underline cursor-pointer"
+                      >
+                        Remove file
+                      </button>
+                    </>
+                  ) : (
+                    <>
+                      <UploadIcon size={32} className="text-slate-400 mb-3" />
+                      <p className="text-xs font-bold text-slate-400 text-center">Drag file details here or click to browse</p>
+                      <p className="text-[9px] font-bold text-slate-500 uppercase tracking-widest mt-1">Accepts .xlsx, .xls, .csv</p>
+                    </>
+                  )}
+                </div>
+              </div>
+
+              <div className="pt-4">
+                <button
+                  type="submit"
+                  disabled={isUploading || !selectedFile || (!useCustomExcel && !excelVendorSelect) || (useCustomExcel && !customExcelVendor.trim())}
+                  className={cn(
+                    "w-full py-4 rounded-2xl text-xs font-bold uppercase tracking-[0.2em] transition-all hover:scale-[1.01] shadow-xl flex items-center justify-center gap-2 cursor-pointer h-14",
+                    isUploading || !selectedFile || (!useCustomExcel && !excelVendorSelect) || (useCustomExcel && !customExcelVendor.trim())
+                      ? "bg-slate-400 text-white shadow-none cursor-not-allowed"
+                      : `${theme.primaryBg} ${theme.hoverBg} text-white ${theme.shadowPrimary}`
+                  )}
+                >
+                  {isUploading ? "Uploading Workbook..." : "Upload Spreadsheet & Ingest"}
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+
+      </div>
+
+      {/* Structured Tool Spotlight: PDF to JSON tool */}
+      <div className={cn(
+        "rounded-[2.5rem] p-10 border shadow-sm relative overflow-hidden transition-all duration-300",
+        isDarkMode ? "bg-violet-950/20 border-violet-900/40 text-violet-100" : "bg-violet-50/40 border-violet-100 text-slate-800"
+      )}>
+        <div className="relative z-10 flex flex-col md:flex-row justify-between items-start md:items-center gap-8">
+          <div className="space-y-3">
+            <h3 className={cn("text-xl font-bold flex items-center gap-3", isDarkMode ? "text-violet-300" : "text-[#6366F1]")}>
+              <SparklesIcon size={24} className="text-violet-500 animate-pulse" />
+              Direct Extraction: Interactive PDF to JSON Converter
+            </h3>
+            <p className={cn("text-xs font-medium max-w-2xl leading-relaxed", isDarkMode ? "text-violet-400" : "text-violet-900/60")}>
+              Need to upload data locked inside a PDF Invoice or receipt? Turn any raw document into digital ledger rows in seconds using our intelligent AI converter. Once synthesized, the JSON dataset can be directly integrated.
+            </p>
+          </div>
+          <button
+            onClick={() => setActiveTab('PDF to JSON')}
+            className={cn(
+              "px-8 py-4 bg-violet-650 hover:bg-violet-700 text-white text-xs font-extrabold uppercase tracking-widest rounded-2xl shadow-xl hover:scale-[1.02] transition-all cursor-pointer whitespace-nowrap",
+              isDarkMode ? "bg-violet-800 hover:bg-violet-700" : "bg-[#6366F1] shadow-violet-100"
+            )}
+          >
+            Launch Converter Tool →
+          </button>
+        </div>
+        <div className={cn("absolute -bottom-24 -left-24 w-80 h-80 rounded-full blur-[80px]", isDarkMode ? "bg-violet-900/10" : "bg-violet-100/30")} />
+      </div>
+    </div>
+  );
+};
+
+// ============================================================
 // MAIN APP
 // ============================================================
 export default function App() {
@@ -1659,6 +2178,7 @@ export default function App() {
 
   const currentDetails = selectedVendor ? vendorDetails[selectedVendor] || [] : [];
   const totalFilesCount = useMemo(() => vendors.reduce((acc, v) => acc + v.totalFiles, 0), [vendors]);
+  const isOperator = currentUser === 'user 1' || currentUser === 'user 2';
 
   const fileStatusData = useMemo(() => {
     const totals = vendors.reduce((acc, v) => ({ correct: acc.correct + v.correctFiles }), { correct: 0 });
@@ -1668,7 +2188,11 @@ export default function App() {
   }, [vendors]);
 
   const handleTabChange = (tab: string) => { 
-    setActiveTab(tab); 
+    if (isOperator && tab === 'Performance') {
+      setActiveTab('Overview');
+    } else {
+      setActiveTab(tab); 
+    }
     setSelectedVendor(null); 
     setIsSidebarOpen(false);
   };
@@ -1739,7 +2263,7 @@ export default function App() {
         </div>
       )}
 
-      <Sidebar activeTab={activeTab} onTabChange={handleTabChange} isDarkMode={isDarkMode} isOpen={isSidebarOpen} onClose={() => setIsSidebarOpen(false)} />
+      <Sidebar activeTab={activeTab} onTabChange={handleTabChange} isDarkMode={isDarkMode} isOpen={isSidebarOpen} onClose={() => setIsSidebarOpen(false)} currentUser={currentUser} />
 
       <main className="flex-1 flex flex-col min-w-0">
         <UserHeader 
@@ -1754,6 +2278,8 @@ export default function App() {
           onSwitchUser={(user) => {
             setCurrentUser(user);
             localStorage.setItem('currentUser', user);
+            setSelectedVendor(null);
+            setActiveTab('Overview');
             showToast(`Switched profile to ${user === 'admin' ? 'Admin User' : user === 'user 1' ? 'User 1' : 'User 2'}`, 'success');
           }}
         />
@@ -2105,6 +2631,12 @@ export default function App() {
               </section>
             </motion.div>
 
+          /* ===================== PDF TO JSON TAB ===================== */
+          ) : activeTab === 'PDF to JSON' ? (
+            <motion.div initial={{ opacity: 0, y: 15 }} animate={{ opacity: 1, y: 0 }}>
+              <PdfToJsonConverter isDarkMode={isDarkMode} />
+            </motion.div>
+
           /* ===================== PERFORMANCE TAB ===================== */
           ) : activeTab === 'Performance' ? (
             <motion.div initial={{ opacity: 0, y: 15 }} animate={{ opacity: 1, y: 0 }} className="space-y-10">
@@ -2201,8 +2733,19 @@ export default function App() {
 
           /* ===================== OVERVIEW TAB ===================== */
           ) : (
-            <>
-              {/* Hero Banner */}
+            isOperator ? (
+              <OperatorInboundDashboard
+                isDarkMode={isDarkMode}
+                currentUser={currentUser as 'user 1' | 'user 2'}
+                vendors={vendors.map(v => v.name)}
+                onManualUpload={handleManualUpload}
+                onExcelUpload={handleExcelUpload}
+                isUploading={isUploading}
+                setActiveTab={handleTabChange}
+              />
+            ) : (
+              <>
+                {/* Hero Banner */}
               <div className={cn(
                 "rounded-[2.5rem] p-8 lg:p-12 border mb-10 shadow-sm relative overflow-hidden select-none transition-all duration-300",
                 isDarkMode ? "bg-slate-900 border-slate-800" : "bg-white border-slate-100"
@@ -2224,43 +2767,56 @@ export default function App() {
                       </div>
                     </div>
                   </div>
-                  <div className="flex items-center gap-4">
+                  <div className="flex flex-wrap items-center gap-4 sm:gap-5 w-full lg:w-auto">
                     <button
                       onClick={() => fetchData()}
                       className={cn(
-                        "flex items-center justify-center w-14 h-14 border rounded-[1.25rem] transition-all group cursor-pointer shadow-sm",
+                        "flex items-center justify-center w-14 h-14 border rounded-[1.25rem] transition-all group cursor-pointer shadow-sm shrink-0",
                         isDarkMode 
-                          ? "bg-slate-800 border-slate-700 text-slate-300 hover:bg-slate-700 hover:text-white" 
+                          ? "bg-slate-800 border-slate-700 text-slate-350 hover:bg-slate-700 hover:text-white" 
                           : "bg-white border-slate-100 text-slate-400 hover:bg-slate-50 hover:text-[#005CB9]"
                       )}
                       title="Refresh Data"
                     >
                       <RefreshCwIcon size={20} className={cn('transition-transform duration-500', isLoading && 'animate-spin')} />
                     </button>
-                    <div className="flex flex-col gap-2 w-full lg:w-auto">
-                      <button
-                        onClick={() => setIsUploadModalOpen(true)}
-                        className={cn(
-                          "flex items-center justify-center gap-3 px-8 py-4 bg-[#005CB9] text-white rounded-[1.25rem] text-sm font-bold transition-all hover:bg-[#004A99] hover:scale-[1.02] group w-full lg:w-auto cursor-pointer",
-                          isDarkMode ? "shadow-none" : "shadow-2xl shadow-blue-200"
-                        )}
-                      >
-                        <PlusIcon size={20} className="group-hover:rotate-90 transition-transform duration-300" />
-                        NEW UPLOAD
-                      </button>
-                      <button
-                        onClick={() => window.open('https://outlook.office.com/mail/', '_blank')}
-                        className={cn(
-                          "flex items-center justify-center gap-3 px-8 py-4 border rounded-[1.25rem] text-sm font-bold transition-all hover:scale-[1.02] group w-full lg:w-auto cursor-pointer",
-                          isDarkMode 
-                            ? "bg-slate-800 border-slate-700 text-slate-300 hover:bg-slate-700 hover:text-white hover:border-slate-650 shadow-none" 
-                            : "bg-white border-slate-200 text-[#005CB9] hover:bg-blue-50 hover:border-[#005CB9] shadow-sm"
-                        )}
-                      >
-                        <MailIcon size={20} />
-                        OUTLOOK
-                      </button>
-                    </div>
+                    
+                    <button
+                      onClick={() => setIsUploadModalOpen(true)}
+                      className={cn(
+                        "flex items-center justify-center gap-3 px-8 py-4 bg-[#005CB9] text-white rounded-[1.25rem] text-sm font-bold transition-all hover:bg-[#004A99] hover:scale-[1.02] group cursor-pointer h-14 w-auto shrink-0",
+                        isDarkMode ? "shadow-none" : "shadow-xl shadow-blue-200"
+                      )}
+                    >
+                      <PlusIcon size={20} className="group-hover:rotate-90 transition-transform duration-300 shrink-0" />
+                      <span className="whitespace-nowrap">NEW UPLOAD</span>
+                    </button>
+                    
+                    <button
+                      onClick={() => window.open('https://outlook.office.com/mail/', '_blank')}
+                      className={cn(
+                        "flex items-center justify-center gap-3 px-8 py-4 border rounded-[1.25rem] text-sm font-bold transition-all hover:scale-[1.02] group cursor-pointer h-14 w-auto shrink-0",
+                        isDarkMode 
+                          ? "bg-slate-800 border-slate-700 text-slate-300 hover:bg-slate-700 hover:text-white hover:border-slate-650 shadow-none" 
+                          : "bg-white border-slate-200 text-[#005CB9] hover:bg-blue-50/20 hover:border-blue-300 shadow-sm"
+                      )}
+                    >
+                      <MailIcon size={20} className="shrink-0" />
+                      <span className="whitespace-nowrap">OUTLOOK</span>
+                    </button>
+                    
+                    <button
+                      onClick={() => setActiveTab('PDF to JSON')}
+                      className={cn(
+                        "flex items-center justify-center gap-3 px-8 py-4 border rounded-[1.25rem] text-sm font-bold transition-all hover:scale-[1.02] group cursor-pointer h-14 w-auto shrink-0",
+                        isDarkMode 
+                          ? "bg-violet-950/40 border-violet-850 text-violet-300 hover:bg-violet-900/60 hover:text-white shadow-none" 
+                          : "bg-violet-50/50 border-violet-100 text-[#6366F1] hover:bg-violet-100/60 hover:border-violet-300 shadow-sm"
+                      )}
+                    >
+                      <SparklesIcon size={20} className="group-hover:rotate-12 transition-transform duration-300 shrink-0" />
+                      <span className="whitespace-nowrap">PDF TO JSON</span>
+                    </button>
                   </div>
                 </div>
                 <div className={cn("absolute -top-24 -right-24 w-96 h-96 rounded-full blur-[80px]", isDarkMode ? "bg-indigo-950/20" : "bg-indigo-50/50")} />
@@ -2573,6 +3129,7 @@ export default function App() {
                 </div>
               </section>
             </>
+            )
           )}
         </div>
       </main>
