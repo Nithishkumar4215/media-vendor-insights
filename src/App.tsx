@@ -353,13 +353,9 @@ const UserHeader = ({
   isDarkMode: boolean; 
   onToggleDarkMode: () => void; 
   onToggleSidebar: () => void;
-  onSwitchUser: (user: 'admin' | 'user 1' | 'user 2') => void;
+  onSwitchUser?: (user: 'admin' | 'user 1' | 'user 2') => void;
 }) => {
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
-  const [challengeUser, setChallengeUser] = useState<'admin' | 'user 1' | 'user 2' | null>(null);
-  const [password, setPassword] = useState('');
-  const [error, setError] = useState('');
-
   const dropdownRef = useRef<HTMLDivElement>(null);
 
   // Click outside to close dropdown
@@ -372,22 +368,6 @@ const UserHeader = ({
     document.addEventListener("mousedown", handleClickOutside);
     return () => document.removeEventListener("mousedown", handleClickOutside);
   }, []);
-
-  const handleChallengeSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!challengeUser) return;
-    
-    const correctPassword = challengeUser === 'admin' ? '123' : challengeUser === 'user 1' ? '456' : '789';
-    if (password === correctPassword) {
-      onSwitchUser(challengeUser);
-      setChallengeUser(null);
-      setPassword('');
-      setError('');
-      setIsDropdownOpen(false);
-    } else {
-      setError('Incorrect password');
-    }
-  };
 
   return (
     <div className={cn(
@@ -402,8 +382,8 @@ const UserHeader = ({
           className={cn(
             "p-2.5 rounded-xl border transition-all cursor-pointer flex items-center justify-center shadow-sm hover:scale-105 lg:hidden mr-2 shrink-0",
             isDarkMode
-              ? "border-slate-805 bg-slate-800 text-slate-300 hover:bg-slate-700 hover:text-white"
-              : "border-slate-200 bg-white text-slate-500 hover:bg-slate-50 hover:text-slate-805"
+              ? "border-slate-850 bg-slate-800 text-slate-300 hover:bg-slate-700 hover:text-white"
+              : "border-slate-200 bg-white text-slate-500 hover:bg-slate-50 hover:text-slate-850"
           )}
           title="Open Navigation"
         >
@@ -430,12 +410,12 @@ const UserHeader = ({
           {isDarkMode ? <SunIcon size={18} /> : <MoonIcon size={18} />}
         </button>
 
-        {/* User Profile + Dropdown switch */}
+        {/* User Profile + Dropdown */}
         <div className="relative" ref={dropdownRef}>
           <div 
             onClick={() => setIsDropdownOpen(!isDropdownOpen)}
             className="flex items-center gap-4 cursor-pointer select-none group"
-            title="Switch User"
+            title="User Profile Menu"
           >
             <div className="flex flex-col items-end hidden sm:flex text-right">
               <span className={cn("font-bold text-sm leading-tight transition-colors group-hover:text-blue-500 md:group-hover:text-[#005CB9]", isDarkMode ? "text-slate-100 group-hover:text-blue-400" : "text-slate-800")}>
@@ -455,7 +435,7 @@ const UserHeader = ({
             </div>
           </div>
 
-          {/* User selection Dropdown menu */}
+          {/* User Profile Details Menu */}
           <AnimatePresence>
             {isDropdownOpen && (
               <motion.div
@@ -464,57 +444,64 @@ const UserHeader = ({
                 exit={{ opacity: 0, y: 10, scale: 0.95 }}
                 transition={{ duration: 0.15 }}
                 className={cn(
-                  "absolute right-0 mt-3 w-56 rounded-2xl border shadow-2xl p-2.5 z-55 text-left",
+                  "absolute right-0 mt-3 w-64 rounded-2xl border shadow-2xl p-4 z-55 text-left",
                   isDarkMode 
                     ? "bg-slate-900 border-slate-800 text-white shadow-black/40" 
                     : "bg-white border-slate-100 text-[#0c1329] shadow-slate-200/50"
                 )}
               >
-                <p className={cn(
-                  "text-[9px] font-bold uppercase tracking-widest px-3 pt-1.5 pb-2 border-b mb-1.5",
-                  isDarkMode ? "text-slate-450 border-slate-800" : "text-slate-400 border-slate-100"
-                )}>
-                  Select Profile to Switch
-                </p>
-                <div className="space-y-1">
-                  {(Object.keys(USER_PROFILES) as Array<keyof typeof USER_PROFILES>).map((key) => {
-                    const profile = USER_PROFILES[key];
-                    const isActive = currentUser === key;
-                    return (
-                      <button
-                        key={key}
-                        onClick={() => {
-                          if (isActive) {
-                            setIsDropdownOpen(false);
-                          } else {
-                            setChallengeUser(key);
-                            setError('');
-                            setPassword('');
-                          }
-                        }}
-                        className={cn(
-                          "w-full flex items-center gap-3 px-3 py-2 rounded-xl text-xs font-bold transition-all text-left cursor-pointer",
-                          isActive 
-                            ? (isDarkMode ? "bg-slate-800 text-white" : "bg-slate-100 text-slate-800 cursor-default")
-                            : (isDarkMode ? "hover:bg-slate-800 text-slate-300 hover:text-white" : "hover:bg-slate-50 text-slate-600 hover:text-slate-900")
-                        )}
-                      >
-                        <div className={cn(
-                          "w-7 h-7 rounded-lg flex items-center justify-center font-bold text-[10px] border shrink-0",
-                          isDarkMode ? profile.avatarBgDark : profile.avatarBg
-                        )}>
-                          {profile.initial}
-                        </div>
-                        <div className="flex-1 min-w-0">
-                          <p className="truncate font-sans font-bold">{profile.fullName}</p>
-                          <p className="text-[9px] text-slate-400 font-semibold tracking-wide uppercase">{profile.role}</p>
-                        </div>
-                        {isActive && (
-                          <div className="w-2 h-2 rounded-full bg-emerald-500 shrink-0" />
-                        )}
-                      </button>
-                    );
-                  })}
+                <div className="flex flex-col items-center text-center pb-4 border-b border-slate-100 dark:border-slate-800 mb-3">
+                  <div className={cn(
+                    "w-14 h-14 rounded-2xl flex items-center justify-center font-bold text-xl border shadow-md mb-2",
+                    isDarkMode ? USER_PROFILES[currentUser].avatarBgDark : USER_PROFILES[currentUser].avatarBg
+                  )}>
+                    {USER_PROFILES[currentUser].initial}
+                  </div>
+                  <h3 className={cn("font-bold text-base tracking-tight", isDarkMode ? "text-slate-100" : "text-[#0D1E4C]")}>
+                    {USER_PROFILES[currentUser].fullName}
+                  </h3>
+                  <p className="text-[10px] text-slate-400 font-bold uppercase tracking-tight mb-1">
+                    {USER_PROFILES[currentUser].role}
+                  </p>
+                  <span className={cn(
+                    "px-2.5 py-0.5 rounded-full text-[8px] font-bold uppercase tracking-widest flex items-center gap-1.5 mt-1",
+                    isDarkMode ? "bg-emerald-950/40 text-emerald-400" : "bg-emerald-55 text-emerald-600"
+                  )}>
+                    <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
+                    Active Session
+                  </span>
+                </div>
+
+                <div className="space-y-3">
+                  <div className={cn(
+                    "rounded-xl p-2.5 text-[10px] font-mono space-y-1.5",
+                    isDarkMode ? "bg-slate-850/50 text-slate-405" : "bg-slate-50 text-slate-500"
+                  )}>
+                    <div className="flex justify-between">
+                      <span className="font-bold opacity-60">USER HANDLE:</span>
+                      <span className={cn("font-bold", isDarkMode ? "text-slate-300" : "text-[#0d1e4c]")}>@{currentUser.replace(/\s+/g, '')}</span>
+                    </div>
+                    <div className="flex justify-between">
+                      <span className="font-bold opacity-60">SECURITY:</span>
+                      <span className="font-bold text-emerald-500">VERIFIED MODE</span>
+                    </div>
+                  </div>
+
+                  <button
+                    onClick={() => {
+                      setIsDropdownOpen(false);
+                      onLogout();
+                    }}
+                    className={cn(
+                      "w-full py-2.5 px-4 rounded-xl text-xs font-bold uppercase tracking-wider flex items-center justify-center gap-2 transition-all cursor-pointer",
+                      isDarkMode 
+                        ? "bg-red-950/20 hover:bg-red-900/30 text-red-400 border border-red-900/40" 
+                        : "bg-red-50 hover:bg-red-100 text-[#E4002B] border border-red-100"
+                    )}
+                  >
+                    <LogOutIcon size={14} />
+                    Logout Session
+                  </button>
                 </div>
               </motion.div>
             )}
@@ -533,101 +520,6 @@ const UserHeader = ({
           <LogOutIcon size={18} />
         </button>
       </div>
-
-      {/* Switch User Password verification Modal */}
-      <AnimatePresence>
-        {challengeUser && (
-          <div className="fixed inset-0 z-[300] flex items-center justify-center p-4">
-            {/* Backdrop */}
-            <motion.div
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              exit={{ opacity: 0 }}
-              onClick={() => setChallengeUser(null)}
-              className="fixed inset-0 bg-slate-950/60 backdrop-blur-sm"
-            />
-            
-            {/* Modal Body */}
-            <motion.div
-              initial={{ opacity: 0, scale: 0.95, y: 15 }}
-              animate={{ opacity: 1, scale: 1, y: 0 }}
-              exit={{ opacity: 0, scale: 0.95, y: 15 }}
-              transition={{ type: "spring", damping: 25, stiffness: 350 }}
-              className={cn(
-                "w-full max-w-sm rounded-[2.25rem] border shadow-2xl overflow-hidden relative z-10",
-                isDarkMode ? "bg-slate-900 border-slate-800 text-white" : "bg-white border-slate-100 text-slate-800"
-              )}
-            >
-              <div className="p-8">
-                <div className="flex justify-center mb-6">
-                  <div className={cn(
-                    "w-14 h-14 rounded-2xl flex items-center justify-center font-bold text-lg border shadow-sm",
-                    isDarkMode ? USER_PROFILES[challengeUser].avatarBgDark : USER_PROFILES[challengeUser].avatarBg
-                  )}>
-                    {USER_PROFILES[challengeUser].initial}
-                  </div>
-                </div>
-                
-                <h3 className={cn("text-xl font-bold text-center tracking-tight mb-1", isDarkMode ? "text-slate-100" : "text-[#0D1E4C]")}>
-                  Switch to {USER_PROFILES[challengeUser].fullName}
-                </h3>
-                <p className="text-center text-slate-400 text-[10px] font-bold uppercase tracking-widest mb-6">
-                  Authentication Required
-                </p>
-
-                <form onSubmit={handleChallengeSubmit} className="space-y-4">
-                  <div>
-                    <label className="text-[9px] font-bold text-slate-400 uppercase tracking-[0.2em] block mb-2 px-1">
-                      Enter Password
-                    </label>
-                    <input
-                      type="password"
-                      autoFocus
-                      required
-                      value={password}
-                      onChange={(e) => setPassword(e.target.value)}
-                      className={cn(
-                        "w-full px-5 py-3.5 rounded-xl border outline-none text-xs font-bold transition-all font-mono",
-                        isDarkMode 
-                          ? "border-slate-700 bg-slate-850 text-slate-100 focus:ring-2 focus:ring-slate-800 placeholder:text-slate-500" 
-                          : "border-slate-200 bg-slate-50 text-slate-700 focus:ring-2 focus:ring-blue-100"
-                      )}
-                      placeholder="••••••••"
-                    />
-                  </div>
-
-                  {error && (
-                    <p className="text-[#E4002B] text-xs font-bold text-center mt-1">
-                      {error}
-                    </p>
-                  )}
-
-                  <div className="flex gap-3 pt-2">
-                    <button
-                      type="button"
-                      onClick={() => setChallengeUser(null)}
-                      className={cn(
-                        "flex-1 px-5 py-3 rounded-xl text-xs font-bold uppercase tracking-wider border transition-all cursor-pointer",
-                        isDarkMode 
-                          ? "border-slate-700 hover:bg-slate-800 text-slate-300"
-                          : "border-slate-200 hover:bg-slate-50 text-slate-650"
-                      )}
-                    >
-                      Cancel
-                    </button>
-                    <button
-                      type="submit"
-                      className="flex-1 px-5 py-3 bg-[#005CB9] hover:bg-[#004A99] text-white rounded-xl text-xs font-bold uppercase tracking-wider transition-all shadow-md cursor-pointer"
-                    >
-                      Confirm
-                    </button>
-                  </div>
-                </form>
-              </div>
-            </motion.div>
-          </div>
-        )}
-      </AnimatePresence>
     </div>
   );
 };
@@ -3169,3 +3061,4 @@ export default function App() {
     </div>
   );
 }
+
