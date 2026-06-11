@@ -317,7 +317,7 @@ export default function PdfToJsonConverter({ isDarkMode }: PdfToJsonConverterPro
         </div>
 
         {/* CONTROLS SWITCH */}
-        <div className="flex bg-slate-100 dark:bg-slate-950 p-1.5 rounded-2xl border border-slate-200 dark:border-slate-800">
+        <div className="flex flex-col sm:flex-row w-full sm:w-auto bg-slate-100 dark:bg-slate-950 p-1.5 rounded-2xl border border-slate-200 dark:border-slate-800">
           <button 
             type="button"
             onClick={() => setActiveTab('convert')}
@@ -372,7 +372,7 @@ export default function PdfToJsonConverter({ isDarkMode }: PdfToJsonConverterPro
               <button 
                 type="button"
                 onClick={handlePreload}
-                className={`px-5 py-3 rounded-2xl border text-xs font-extrabold uppercase tracking-wider shrink-0 transition-all cursor-pointer flex items-center justify-center gap-2 ${
+                className={`w-full sm:w-auto px-5 py-3 rounded-2xl border text-xs font-extrabold uppercase tracking-wider shrink-0 transition-all cursor-pointer flex items-center justify-center gap-2 ${
                   isDarkMode 
                     ? 'border-indigo-600/40 hover:border-indigo-500 bg-indigo-950/20 text-indigo-300' 
                     : 'border-indigo-200 hover:border-indigo-400 bg-indigo-50 text-indigo-600'
@@ -499,7 +499,7 @@ export default function PdfToJsonConverter({ isDarkMode }: PdfToJsonConverterPro
 
             {/* RIGHT COLUMN: TERMINAL AND OUTPUT VIEW */}
             <div className="lg:col-span-7 flex flex-col justify-between space-y-4 min-h-[400px]">
-              <div className="flex justify-between items-center ml-1">
+              <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3 sm:gap-0 ml-1">
                 <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest font-mono">Live Extraction logs / output</span>
                 {outputJson && (
                   <div className="flex items-center gap-4">

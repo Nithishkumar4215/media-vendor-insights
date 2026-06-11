@@ -299,7 +299,7 @@ const SidebarLink = ({
   <button
     onClick={onClick}
     className={cn(
-      'w-full flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-bold transition-all group cursor-pointer',
+      'w-full flex items-center gap-3 px-4 py-3 min-h-[44px] rounded-xl text-sm font-bold transition-all group cursor-pointer',
       active 
         ? (activeBgClass || 'bg-[#005CB9] text-white shadow-lg shadow-blue-200') 
         : (isDarkMode ? 'text-slate-400 hover:bg-slate-800 hover:text-white' : `text-slate-500 hover:bg-slate-50 ${hoverTextClass || 'hover:text-[#005CB9]'}`)
@@ -444,7 +444,7 @@ const UserHeader = ({
                 exit={{ opacity: 0, y: 10, scale: 0.95 }}
                 transition={{ duration: 0.15 }}
                 className={cn(
-                  "absolute right-0 mt-3 w-64 rounded-2xl border shadow-2xl p-4 z-55 text-left",
+                  "absolute right-0 mt-3 w-64 max-w-[calc(100vw-2rem)] rounded-2xl border shadow-2xl p-4 z-55 text-left",
                   isDarkMode 
                     ? "bg-slate-900 border-slate-800 text-white shadow-black/40" 
                     : "bg-white border-slate-100 text-[#0c1329] shadow-slate-200/50"
@@ -739,7 +739,7 @@ const DetailStat = ({ label, value, icon, color, isDarkMode }: { label: string; 
         
         <div className="space-y-1">
           <p className={cn("text-[10px] font-bold uppercase tracking-[0.2em]", theme.labelText)}>{label}</p>
-          <p className={cn("text-3xl font-extrabold tracking-tight", theme.valueText)}>{value}</p>
+          <p className={cn("text-2xl sm:text-3xl font-extrabold tracking-tight", theme.valueText)}>{value}</p>
         </div>
       </div>
     </div>
@@ -805,7 +805,7 @@ const PreviewModal = ({ fileId, fileName, onClose, isDarkMode }: { fileId: numbe
       >
         {/* Header */}
         <div className={cn(
-          "px-8 py-6 border-b flex items-center justify-between shrink-0 transition-colors",
+          "px-6 sm:px-8 py-6 border-b flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 sm:gap-0 shrink-0 transition-colors",
           isDarkMode ? "border-slate-800 bg-slate-900/60" : "border-slate-100 bg-slate-50/40"
         )}>
           <div className="flex items-center gap-4">
@@ -831,7 +831,7 @@ const PreviewModal = ({ fileId, fileName, onClose, isDarkMode }: { fileId: numbe
         </div>
 
         {/* Body */}
-        <div className="flex-1 overflow-auto p-6">
+        <div className="flex-1 overflow-auto p-4 sm:p-6">
           {isLoading ? (
             <div className="flex items-center justify-center h-48">
               <div className="w-10 h-10 border-4 border-slate-100 border-t-[#005CB9] rounded-full animate-spin" />
@@ -869,7 +869,7 @@ const PreviewModal = ({ fileId, fileName, onClose, isDarkMode }: { fileId: numbe
         {/* Pagination Footer */}
         {totalPages > 1 && (
           <div className={cn(
-            "px-8 py-5 border-t flex items-center justify-between shrink-0 transition-colors",
+            "px-6 sm:px-8 py-5 border-t flex flex-col sm:flex-row items-center justify-between gap-4 sm:gap-0 shrink-0 transition-colors",
             isDarkMode ? "border-slate-800 bg-slate-900/40" : "border-slate-100 bg-slate-50/30"
           )}>
             <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">
@@ -918,7 +918,7 @@ const DeleteConfirmModal = ({ fileName, onConfirm, onCancel, isDeleting, isDarkM
         isDarkMode ? "bg-slate-900 border-slate-800 text-slate-100" : "bg-white border-slate-200 text-slate-800"
       )}
     >
-      <div className="p-10">
+      <div className="p-6 sm:p-10">
         <div className={cn("w-16 h-16 rounded-2xl flex items-center justify-center mx-auto mb-6", isDarkMode ? "bg-red-950/40" : "bg-red-50")}>
           <TrashIcon size={28} className="text-[#E4002B]" />
         </div>
@@ -926,7 +926,7 @@ const DeleteConfirmModal = ({ fileName, onConfirm, onCancel, isDeleting, isDarkM
         <p className="text-sm text-slate-400 text-center font-medium mb-2">This action cannot be undone.</p>
         <p className={cn("text-xs text-center font-bold rounded-xl px-4 py-3 border truncate font-mono", isDarkMode ? "bg-slate-850 border-slate-800 text-slate-300" : "bg-slate-50 border-slate-100 text-slate-500")}>{fileName}</p>
       </div>
-      <div className="px-10 pb-10 flex gap-4">
+      <div className="px-6 sm:px-10 pb-6 sm:pb-10 flex flex-col sm:flex-row gap-4">
         <button onClick={onCancel} className={cn("flex-1 px-6 py-4 border rounded-2xl text-xs font-bold uppercase tracking-widest transition-all cursor-pointer", isDarkMode ? "border-slate-700 bg-slate-800 text-slate-300 hover:bg-slate-700" : "border-slate-200 text-slate-500 hover:bg-slate-50")}>
           Cancel
         </button>
@@ -1005,7 +1005,7 @@ const NewUploadModal = ({
       >
         {/* Modal Header */}
         <div className={cn(
-          "p-10 border-b flex justify-between items-center transition-colors",
+          "p-6 sm:p-10 border-b flex justify-between items-start sm:items-center transition-colors",
           isDarkMode ? "border-slate-800 bg-slate-900/60" : "border-slate-100 bg-slate-50/30"
         )}>
           <div>
@@ -1026,7 +1026,7 @@ const NewUploadModal = ({
         </div>
 
         {/* Tab Toggle */}
-        <div className="px-10 pt-8 flex gap-3">
+        <div className="px-6 sm:px-10 pt-6 sm:pt-8 flex flex-col sm:flex-row gap-3">
           <button
             onClick={() => setMode('manual')}
             className={cn(
@@ -1052,7 +1052,7 @@ const NewUploadModal = ({
         </div>
 
         {/* Form Body */}
-        <div className="p-10 space-y-6">
+        <div className="p-6 sm:p-10 space-y-6">
           {/* Vendor Field (shared) */}
           <div className="space-y-3">
             <label className="text-[10px] font-bold text-slate-400 uppercase tracking-[0.25em] block ml-1">Destination Vendor</label>
@@ -1143,7 +1143,7 @@ const NewUploadModal = ({
 
         {/* Footer */}
         <div className={cn(
-          "p-10 flex gap-4 transition-colors pt-6",
+          "p-6 sm:p-10 flex flex-col sm:flex-row gap-4 transition-colors pt-6",
           isDarkMode ? "bg-slate-950/40" : "bg-slate-50/50"
         )}>
           <button 
@@ -1429,7 +1429,7 @@ const OperatorInboundDashboard = ({
               <UploadIcon className="w-10 h-10 text-white" />
             </div>
             <div>
-              <h1 className={cn("text-3xl lg:text-4xl font-extrabold leading-none mb-3 tracking-tight uppercase", isDarkMode ? "text-slate-100" : "text-[#0D1E4C]")}>
+              <h1 className={cn("text-2xl sm:text-3xl lg:text-4xl font-extrabold leading-none mb-3 tracking-tight uppercase", isDarkMode ? "text-slate-100" : "text-[#0D1E4C]")}>
                 Operator Ingest Hub
               </h1>
               <div className="flex flex-wrap items-center gap-3">
@@ -1440,10 +1440,10 @@ const OperatorInboundDashboard = ({
             </div>
           </div>
 
-          <div className="flex flex-wrap items-center gap-4">
+          <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-4 w-full lg:w-auto">
             <button
               onClick={() => window.open('https://outlook.office.com/mail/', '_blank')}
-              className={theme.btnAccent}
+              className={cn("w-full sm:w-auto justify-center flex items-center gap-2 px-6 py-3.5 border rounded-2xl text-xs font-bold transition-all hover:scale-[1.02]", theme.btnAccent)}
             >
               <MailIcon size={16} />
               OUTLOOK EMAIL
@@ -1451,7 +1451,7 @@ const OperatorInboundDashboard = ({
             <button
               onClick={() => setActiveTab('PDF to JSON')}
               className={cn(
-                "flex items-center justify-center gap-3 px-6 py-3.5 border rounded-2xl text-xs font-bold transition-all hover:scale-[1.02] group cursor-pointer h-12",
+                "flex items-center justify-center gap-3 px-6 py-3.5 border rounded-2xl text-xs font-bold transition-all hover:scale-[1.02] group cursor-pointer h-12 w-full sm:w-auto",
                 isDarkMode 
                   ? "bg-violet-950/40 border-violet-850 text-violet-350 hover:bg-violet-900/60" 
                   : "bg-violet-50/50 border-violet-100 text-[#6366F1] hover:bg-violet-100/60 shadow-sm"
@@ -2659,7 +2659,7 @@ export default function App() {
                       </div>
                     </div>
                   </div>
-                  <div className="flex flex-wrap items-center gap-4 sm:gap-5 w-full lg:w-auto">
+                  <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-4 sm:gap-5 w-full lg:w-auto">
                     <button
                       onClick={() => fetchData()}
                       className={cn(
@@ -2676,7 +2676,7 @@ export default function App() {
                     <button
                       onClick={() => setIsUploadModalOpen(true)}
                       className={cn(
-                        "flex items-center justify-center gap-3 px-8 py-4 bg-[#005CB9] text-white rounded-[1.25rem] text-sm font-bold transition-all hover:bg-[#004A99] hover:scale-[1.02] group cursor-pointer h-14 w-auto shrink-0",
+                        "flex items-center justify-center gap-3 px-8 py-4 bg-[#005CB9] text-white rounded-[1.25rem] text-sm font-bold transition-all hover:bg-[#004A99] hover:scale-[1.02] group cursor-pointer h-14 w-full sm:w-auto shrink-0",
                         isDarkMode ? "shadow-none" : "shadow-xl shadow-blue-200"
                       )}
                     >
@@ -2687,7 +2687,7 @@ export default function App() {
                     <button
                       onClick={() => window.open('https://outlook.office.com/mail/', '_blank')}
                       className={cn(
-                        "flex items-center justify-center gap-3 px-8 py-4 border rounded-[1.25rem] text-sm font-bold transition-all hover:scale-[1.02] group cursor-pointer h-14 w-auto shrink-0",
+                        "flex items-center justify-center gap-3 px-8 py-4 border rounded-[1.25rem] text-sm font-bold transition-all hover:scale-[1.02] group cursor-pointer h-14 w-full sm:w-auto shrink-0",
                         isDarkMode 
                           ? "bg-slate-800 border-slate-700 text-slate-300 hover:bg-slate-700 hover:text-white hover:border-slate-650 shadow-none" 
                           : "bg-white border-slate-200 text-[#005CB9] hover:bg-blue-50/20 hover:border-blue-300 shadow-sm"
@@ -2700,7 +2700,7 @@ export default function App() {
                     <button
                       onClick={() => setActiveTab('PDF to JSON')}
                       className={cn(
-                        "flex items-center justify-center gap-3 px-8 py-4 border rounded-[1.25rem] text-sm font-bold transition-all hover:scale-[1.02] group cursor-pointer h-14 w-auto shrink-0",
+                        "flex items-center justify-center gap-3 px-8 py-4 border rounded-[1.25rem] text-sm font-bold transition-all hover:scale-[1.02] group cursor-pointer h-14 w-full sm:w-auto shrink-0",
                         isDarkMode 
                           ? "bg-violet-950/40 border-violet-850 text-violet-300 hover:bg-violet-900/60 hover:text-white shadow-none" 
                           : "bg-violet-50/50 border-violet-100 text-[#6366F1] hover:bg-violet-100/60 hover:border-violet-300 shadow-sm"
