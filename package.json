@@ -5,7 +5,7 @@
   "type": "module",
   "scripts": {
     "dev": "tsx backend/server.js",
-    "start": "cross-env NODE_ENV=production tsx backend/server.js",
+    "start": "NODE_ENV=production node backend/server.js",
     "server": "tsx backend/server.js",
     "build": "vite build",
     "preview": "vite preview",

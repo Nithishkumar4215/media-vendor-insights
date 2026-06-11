@@ -9,8 +9,24 @@ import * as xlsx from "xlsx";
 
 dotenv.config();
 
+/* =========================
+   ✅ STARTUP DIAGNOSTICS
+========================= */
+console.log("========================================");
+console.log("🔧 SERVER STARTUP DIAGNOSTICS");
+console.log("========================================");
+console.log(`  NODE_ENV  : ${process.env.NODE_ENV || "development"}`);
+console.log(`  PORT      : ${process.env.PORT || 10000}`);
+console.log(`  DB_HOST   : ${process.env.DB_HOST || "⚠️  NOT SET (will fall back to localhost)"}`);
+console.log(`  DB_USER   : ${process.env.DB_USER || "⚠️  NOT SET (will fall back to root)"}`);
+console.log(`  DB_PASSWORD: ${process.env.DB_PASSWORD ? "✅ SET (hidden)" : "⚠️  NOT SET"}`);
+console.log(`  DB_NAME   : ${process.env.DB_NAME || "⚠️  NOT SET (will fall back to vendor_db)"}`);
+console.log(`  DB_PORT   : ${process.env.DB_PORT || "3306 (default)"}`);
+console.log(`  DB_SSL    : ${process.env.DB_SSL || "not set (auto-enabled in production)"}`);
+console.log("========================================");
+
 const app = express();
-const PORT = process.env.PORT || 5000;
+const PORT = process.env.PORT || 10000;
 
 /* =========================
    ✅ MIDDLEWARE
@@ -49,32 +65,63 @@ const upload = multer({
 });
 
 /* =========================
-   ✅ DATABASE CONNECTION
+   ✅ DATABASE CONNECTION (Pool)
 ========================= */
-const db = mysql.createConnection({
+// Determine SSL configuration:
+// - Production: SSL enabled by default (most remote MySQL providers require it)
+// - Development: SSL disabled by default
+// - Override: set DB_SSL=true or DB_SSL=false explicitly
+const sslConfig = (() => {
+  if (process.env.DB_SSL === "false") return {};
+  if (process.env.DB_SSL === "true" || process.env.NODE_ENV === "production") {
+    return { ssl: { rejectUnauthorized: false } };
+  }
+  return {};
+})();
+
+const db = mysql.createPool({
   host:     process.env.DB_HOST     || "localhost",
   user:     process.env.DB_USER     || "root",
   password: process.env.DB_PASSWORD || "root",
   database: process.env.DB_NAME     || "vendor_db",
+  port:     parseInt(process.env.DB_PORT) || 3306,
   charset:  "utf8mb4",
-  ...(process.env.DB_SSL === "true" ? { ssl: { rejectUnauthorized: false } } : {})
+  waitForConnections: true,
+  connectionLimit: 10,
+  queueLimit: 0,
+  ...sslConfig,
 });
 
-db.connect((err) => {
+// Test initial connection — DO NOT crash the server if it fails
+db.getConnection((err, connection) => {
   if (err) {
-    console.error("❌ DB CONNECTION ERROR:", err.message);
-    process.exit(1);
+    console.error("========================================");
+    console.error("❌ DB CONNECTION ERROR");
+    console.error("========================================");
+    console.error("  Error Code   :", err.code);
+    console.error("  Error Number :", err.errno);
+    console.error("  SQL State    :", err.sqlState || "N/A");
+    console.error("  Message      :", err.message);
+    console.error("  Fatal        :", err.fatal);
+    console.error("----------------------------------------");
+    console.error("  DB_HOST      :", process.env.DB_HOST || "localhost (default)");
+    console.error("  DB_USER      :", process.env.DB_USER || "root (default)");
+    console.error("  DB_NAME      :", process.env.DB_NAME || "vendor_db (default)");
+    console.error("  DB_PORT      :", process.env.DB_PORT || "3306 (default)");
+    console.error("  DB_SSL       :", process.env.DB_SSL || "auto");
+    console.error("  NODE_ENV     :", process.env.NODE_ENV || "development");
+    console.error("========================================");
+    console.error("⚠️  Server will continue running WITHOUT database.");
+    console.error("   API endpoints requiring DB will return errors.");
+    console.error("   Fix the DB connection and the pool will auto-reconnect.");
+    console.error("========================================");
+    // DO NOT call process.exit(1) — the server must stay alive for Render
+  } else {
+    console.log("✅ DB CONNECTED SUCCESSFULLY");
+    connection.release();
+    initializeDatabase();
   }
-  console.log("✅ DB CONNECTED");
-  initializeDatabase();
 });
-
-// Keep connection alive
-setInterval(() => {
-  db.ping((err) => {
-    if (err) console.error("❌ DB PING ERROR:", err.message);
-  });
-}, 60000);
 
 /* =========================
    ✅ DATABASE INIT
@@ -165,13 +212,27 @@ function parseFileBuffer(buffer, originalName) {
 
 /* =========================
    ✅ HEALTH CHECK
+   Returns 200 even when DB is down so Render doesn't
+   kill the service in a restart loop.
 ========================= */
 app.get("/api/health", (req, res) => {
-  db.ping((err) => {
+  db.getConnection((err, connection) => {
     if (err) {
-      return res.status(503).json({ status: "error", db: "disconnected", message: err.message });
+      return res.status(200).json({
+        status: "degraded",
+        db: "disconnected",
+        dbError: err.message,
+        uptime: process.uptime(),
+        timestamp: new Date().toISOString(),
+      });
     }
-    res.json({ status: "ok", db: "connected", uptime: process.uptime(), timestamp: new Date().toISOString() });
+    connection.release();
+    res.json({
+      status: "ok",
+      db: "connected",
+      uptime: process.uptime(),
+      timestamp: new Date().toISOString(),
+    });
   });
 });
 
